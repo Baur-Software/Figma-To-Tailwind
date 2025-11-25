@@ -1,11 +1,21 @@
-# @figma-to-tailwind/core
+# @baur-software/figma-to
 
-Normalize Figma design tokens to Tailwind CSS v4 and Ionic theme interfaces.
+Transform Figma design tokens to any framework via adapters.
 
-This library bridges **Figma's MCP server** and **REST API** with your frontend stack, generating production-ready CSS for:
-- **Tailwind CSS v4** (`@theme` directive with CSS variables)
-- **Ionic Framework** (CSS custom properties with color variants)
-- **SolidJS / Capacitor** applications
+This library bridges **Figma's MCP server** and **REST API** with your frontend stack through a pluggable adapter architecture.
+
+## Current Adapters
+
+### Input Adapters
+
+- **Figma** - Parse Figma REST API and MCP server responses
+
+### Output Adapters
+
+- **Tailwind/Ionic** - Generate production-ready CSS for:
+  - **Tailwind CSS v4** (`@theme` directive with CSS variables)
+  - **Ionic Framework** (CSS custom properties with color variants)
+  - **SolidJS / Capacitor** applications
 
 ## Why This Library?
 
@@ -13,7 +23,7 @@ This library bridges **Figma's MCP server** and **REST API** with your frontend 
 
 Traditionally, when designers update colors, spacing, or typography in Figma, developers manually copy those values into code. This creates drift, inconsistencies, and wasted time.
 
-With `@figma-to-tailwind/core`, you can:
+With `@baur-software/figma-to`, you can:
 
 - **Eliminate manual token translation** - Figma variables become CSS automatically
 - **Stay in sync with design changes** - Re-run the generator whenever Figma updates
@@ -49,13 +59,13 @@ No API tokens to manage, no scripts to write - just ask.
 ## Installation
 
 ```bash
-npm install @figma-to-tailwind/core
+npm install @baur-software/figma-to
 ```
 
 ## Quick Start
 
 ```typescript
-import { figmaToTailwind } from '@figma-to-tailwind/core';
+import { figmaToTailwind } from '@baur-software/figma-to';
 
 // From Figma REST API response
 const output = await figmaToTailwind({
@@ -73,7 +83,7 @@ fs.writeFileSync('theme.css', output.css);
 When using the [Figma MCP server](https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server) with Claude or other AI assistants:
 
 ```typescript
-import { figmaToTailwind } from '@figma-to-tailwind/core';
+import { figmaToTailwind } from '@baur-software/figma-to';
 
 // MCP server response from get_figma_data tool
 const output = await figmaToTailwind({
@@ -86,7 +96,7 @@ console.log(output.css);
 ### From Figma REST API
 
 ```typescript
-import { figmaToTailwind } from '@figma-to-tailwind/core';
+import { figmaToTailwind } from '@baur-software/figma-to';
 
 // Fetch variables from Figma API
 const response = await fetch(
@@ -106,7 +116,7 @@ const output = await figmaToTailwind({
 For more control, separate parsing and generation:
 
 ```typescript
-import { parseTheme, generateOutput } from '@figma-to-tailwind/core';
+import { parseTheme, generateOutput } from '@baur-software/figma-to';
 
 // Step 1: Parse Figma data to normalized theme
 const theme = await parseTheme({
@@ -129,7 +139,7 @@ const output = await generateOutput(theme, {
 import {
   createFigmaAdapter,
   createTailwindIonicAdapter,
-} from '@figma-to-tailwind/core';
+} from '@baur-software/figma-to';
 
 const figmaAdapter = createFigmaAdapter();
 const theme = await figmaAdapter.parse({ variablesResponse });
@@ -295,14 +305,14 @@ import type {
   // Output types
   TailwindThemeOutput,
   IonicTheme,
-} from '@figma-to-tailwind/core';
+} from '@baur-software/figma-to';
 ```
 
 ## Integration with Ionic + SolidJS + Capacitor
 
 ```typescript
 // generate-theme.ts
-import { figmaToTailwind } from '@figma-to-tailwind/core';
+import { figmaToTailwind } from '@baur-software/figma-to';
 import { writeFileSync } from 'fs';
 
 async function generateTheme() {
