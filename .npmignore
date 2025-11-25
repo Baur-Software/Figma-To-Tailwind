@@ -1,0 +1,29 @@
+# Source files (dist is published)
+src/
+
+# Tests
+tests/
+test-results/
+playwright-report/
+
+# Config files
+tsconfig.json
+vitest.config.ts
+playwright.config.ts
+
+# GitHub
+.github/
+
+# Docs (keep README)
+CONTRIBUTING.md
+ROADMAP.md
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# Dev artifacts
+node_modules/
+*.log
+*.tgz

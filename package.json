@@ -1,7 +1,7 @@
 {
-  "name": "@figma-to-tailwind/core",
+  "name": "@baur-software/figma-to",
   "version": "0.1.0",
-  "description": "Normalize Figma MCP design tokens to Tailwind/Ionic theme interfaces",
+  "description": "Transform Figma design tokens to any framework via adapters",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
