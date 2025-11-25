@@ -1,6 +1,6 @@
 {
   "name": "@baur-software/figma-to",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Transform Figma design tokens to any framework via adapters",
   "type": "module",
   "main": "dist/index.js",
