@@ -479,3 +479,39 @@ export {
   aliasVariables,
   variableCollections,
 };
+
+// =============================================================================
+// Simplified MCP Variables (from get_variable_defs tool)
+// =============================================================================
+
+/**
+ * Mock simplified MCP variables - simulates output from Figma MCP get_variable_defs tool
+ */
+export const mockSimplifiedMCPVariables: Record<string, string> = {
+  // Colors
+  "Color/Primary/500": "#3880f6",
+  "Color/Primary/600": "#2d66c5",
+  "Color/Secondary/500": "#3cd6af",
+  "Color/Success": "#28b65d",
+  "Color/Warning": "#ffc200",
+  "Color/Danger": "#eb4235",
+  "Color/Background": "#ffffff,#111111", // Light,Dark modes
+  "Color/Text": "#111111,#eeeeee", // Light,Dark modes
+
+  // Spacing
+  "Spacing/1": "4",
+  "Spacing/2": "8",
+  "Spacing/4": "16",
+  "Spacing/8": "32",
+  "Radius/Small": "4",
+  "Radius/Medium": "8",
+  "Radius/Large": "16",
+
+  // Typography
+  "Typography/Font Family": "Inter",
+  "Display/xl/Bold": "Font(family: \"Inter\", style: Bold, size: 20, weight: 700, lineHeight: 28, letterSpacing: 0)",
+  "Text/md/Regular": "Font(family: \"Inter\", style: Regular, size: 16, weight: 400, lineHeight: 24, letterSpacing: 0)",
+
+  // Effects
+  "shadow-sm": "Effect(type: DROP_SHADOW, color: #00000020, offset: (0, 1), radius: 2, spread: 0)",
+};

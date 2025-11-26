@@ -9,6 +9,7 @@ import { createFigmaAdapter } from '../../dist/adapters/figma/index.js';
 import {
   mockFigmaVariablesResponse,
   mockFigmaMCPResponse,
+  mockSimplifiedMCPVariables,
 } from './fixtures/figma-variables.js';
 
 test.describe('Figma Adapter', () => {
@@ -41,7 +42,7 @@ test.describe('Figma Adapter', () => {
       const result = await adapter.validate({});
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('Either mcpData or variablesResponse must be provided');
+      expect(result.errors).toContain('Either mcpData, variablesResponse, or simplifiedVariables must be provided');
     });
 
     test('rejects MCP data without name', async () => {
@@ -56,6 +57,28 @@ test.describe('Figma Adapter', () => {
 
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('MCP data missing file name');
+    });
+
+    test('validates simplified MCP variables correctly', async () => {
+      const adapter = createFigmaAdapter();
+
+      const result = await adapter.validate({
+        simplifiedVariables: mockSimplifiedMCPVariables,
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('rejects empty simplified variables', async () => {
+      const adapter = createFigmaAdapter();
+
+      const result = await adapter.validate({
+        simplifiedVariables: {},
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Simplified variables object is empty');
     });
   });
 
@@ -219,6 +242,113 @@ test.describe('Figma Adapter', () => {
 
       expect(mcpColors?.modes).toEqual(restColors?.modes);
       expect(mcpColors?.defaultMode).toEqual(restColors?.defaultMode);
+    });
+  });
+
+  test.describe('Parsing Simplified MCP Variables', () => {
+    test('parses simplified variables with correct metadata', async () => {
+      const adapter = createFigmaAdapter();
+
+      const theme = await adapter.parse({
+        simplifiedVariables: mockSimplifiedMCPVariables,
+        fileName: 'Test Design System',
+      });
+
+      expect(theme.name).toBe('Test Design System');
+      expect(theme.meta?.source).toBe('figma-mcp-simplified');
+    });
+
+    test('parses color tokens from hex values', async () => {
+      const adapter = createFigmaAdapter();
+
+      const theme = await adapter.parse({
+        simplifiedVariables: mockSimplifiedMCPVariables,
+      });
+
+      const colorCollection = theme.collections.find(c => c.name === 'Color');
+      expect(colorCollection).toBeDefined();
+
+      const defaultTokens = colorCollection?.tokens['Default'];
+      // Structure: Color/Primary/500 -> collection: "Color", path: ["primary"], tokenName: "500"
+      // So tokens['Default']['primary']['500']
+      const primary = (defaultTokens?.['primary'] as Record<string, unknown>);
+      const color500 = primary?.['500'] as { $type: string; $value: { r: number; g: number; b: number; a: number } };
+
+      expect(color500?.$type).toBe('color');
+      // #3880f6 = rgb(56, 128, 246) = r: 0.2196, g: 0.502, b: 0.9647
+      expect(color500?.$value.r).toBeCloseTo(0.2196, 2);
+      expect(color500?.$value.g).toBeCloseTo(0.502, 2);
+      expect(color500?.$value.b).toBeCloseTo(0.9647, 2);
+    });
+
+    test('parses spacing tokens as dimensions', async () => {
+      const adapter = createFigmaAdapter();
+
+      const theme = await adapter.parse({
+        simplifiedVariables: mockSimplifiedMCPVariables,
+      });
+
+      const spacingCollection = theme.collections.find(c => c.name === 'Spacing');
+      expect(spacingCollection).toBeDefined();
+
+      const defaultTokens = spacingCollection?.tokens['Default'];
+      // Structure: Spacing/4 -> collection: "Spacing", path: [], tokenName: "4"
+      // So tokens['Default']['4']
+      const spacing4 = defaultTokens?.['4'] as { $type: string; $value: { value: number; unit: string } };
+
+      expect(spacing4?.$type).toBe('dimension');
+      expect(spacing4?.$value.value).toBe(16);
+      expect(spacing4?.$value.unit).toBe('px');
+    });
+
+    test('parses Font() strings into typography tokens', async () => {
+      const adapter = createFigmaAdapter();
+
+      const theme = await adapter.parse({
+        simplifiedVariables: mockSimplifiedMCPVariables,
+      });
+
+      const displayCollection = theme.collections.find(c => c.name === 'Display');
+      expect(displayCollection).toBeDefined();
+
+      const defaultTokens = displayCollection?.tokens['Default'];
+      // Structure: Display/xl/Bold -> collection: "Display", path: ["xl"], tokenName: "bold"
+      // So tokens['Default']['xl']['bold']
+      const xl = (defaultTokens?.['xl'] as Record<string, unknown>);
+      const bold = xl?.['bold'] as { $type: string; $value: unknown };
+
+      expect(bold?.$type).toBe('typography');
+    });
+
+    test('parses Effect() strings into shadow tokens', async () => {
+      const adapter = createFigmaAdapter();
+
+      const theme = await adapter.parse({
+        simplifiedVariables: mockSimplifiedMCPVariables,
+      });
+
+      // shadow-sm -> collection: "shadow", path: [], tokenName: "shadow-sm"
+      // The collection is named from the first segment, which in this case is "shadow-sm"
+      // So the collection name will be "shadow-sm" with no path
+      const shadowCollection = theme.collections.find(c => c.name === 'shadow-sm');
+      expect(shadowCollection).toBeDefined();
+
+      const defaultTokens = shadowCollection?.tokens['Default'];
+      // Since "shadow-sm" is both the collection (first segment) and token name (last segment)
+      // when there's only one segment, the token is at the root level
+      const shadowSm = defaultTokens?.['shadow-sm'] as { $type: string; $value: unknown };
+
+      expect(shadowSm?.$type).toBe('shadow');
+    });
+
+    test('uses default fileName when not provided', async () => {
+      const adapter = createFigmaAdapter();
+
+      const theme = await adapter.parse({
+        simplifiedVariables: mockSimplifiedMCPVariables,
+      });
+
+      expect(theme.name).toBe('Untitled');
     });
   });
 });

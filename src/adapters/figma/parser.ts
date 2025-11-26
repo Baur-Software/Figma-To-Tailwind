@@ -517,9 +517,15 @@ export function parseSimplifiedVariables(
       const tokenType = detectSimplifiedTokenType(fullPath, value);
       let tokenValue: Token['$value'];
 
-      // Handle multiple modes (comma-separated values)
-      const values = value.split(',').map((v: string) => v.trim());
-      const primaryValue = values[0];
+      // For complex values (Font(), Effect()), use the value directly without splitting
+      // For simple values, handle multiple modes (comma-separated)
+      let primaryValue: string;
+      if (value.startsWith('Font(') || value.startsWith('Effect(')) {
+        primaryValue = value;
+      } else {
+        const values = value.split(',').map((v: string) => v.trim());
+        primaryValue = values[0];
+      }
 
       // Parse the value based on type
       if (tokenType === 'color' && primaryValue.startsWith('#')) {
