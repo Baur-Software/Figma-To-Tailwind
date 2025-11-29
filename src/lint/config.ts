@@ -29,38 +29,96 @@ const CONFIG_FILES = [
 const PRESETS: Record<string, LintConfig> = {
   recommended: {
     rules: {
+      // Naming & Structure
       'inconsistent-naming': 'warning',
-      'missing-description': 'info',
-      'duplicate-values': 'info',
-      'invalid-color-value': 'error',
-      'deep-nesting': 'warning',
       'invalid-token-name': 'error',
+      'deep-nesting': 'warning',
       'empty-collection': 'warning',
+
+      // Documentation
+      'missing-description': 'info',
+
+      // Value Validation
+      'invalid-color-value': 'error',
+      'invalid-dimension-value': 'error',
+      'invalid-typography-value': 'error',
+      'invalid-shadow-value': 'error',
+      'invalid-gradient-value': 'error',
+      'invalid-border-value': 'error',
+      'invalid-cubic-bezier': 'error',
+
+      // References
       'broken-reference': 'error',
+      'circular-reference': 'error',
+      'duplicate-values': 'info',
+
+      // Collection/Mode
+      'mode-consistency': 'warning',
+      'missing-default-mode': 'error',
+
+      // Figma-specific
+      'hidden-from-publishing': 'info',
     },
   },
   strict: {
     rules: {
+      // Naming & Structure
       'inconsistent-naming': 'error',
-      'missing-description': 'warning',
-      'duplicate-values': 'warning',
-      'invalid-color-value': 'error',
-      'deep-nesting': 'error',
       'invalid-token-name': 'error',
+      'deep-nesting': 'error',
       'empty-collection': 'error',
+
+      // Documentation
+      'missing-description': 'warning',
+
+      // Value Validation
+      'invalid-color-value': 'error',
+      'invalid-dimension-value': 'error',
+      'invalid-typography-value': 'error',
+      'invalid-shadow-value': 'error',
+      'invalid-gradient-value': 'error',
+      'invalid-border-value': 'error',
+      'invalid-cubic-bezier': 'error',
+
+      // References
       'broken-reference': 'error',
+      'circular-reference': 'error',
+      'duplicate-values': 'warning',
+
+      // Collection/Mode
+      'mode-consistency': 'error',
+      'missing-default-mode': 'error',
+
+      // Figma-specific
+      'hidden-from-publishing': 'warning',
     },
   },
   minimal: {
     rules: {
+      // Only critical validation errors
       'inconsistent-naming': false,
-      'missing-description': false,
-      'duplicate-values': false,
-      'invalid-color-value': 'error',
-      'deep-nesting': false,
       'invalid-token-name': 'error',
+      'deep-nesting': false,
       'empty-collection': false,
+
+      'missing-description': false,
+
+      'invalid-color-value': 'error',
+      'invalid-dimension-value': 'error',
+      'invalid-typography-value': 'error',
+      'invalid-shadow-value': 'error',
+      'invalid-gradient-value': 'error',
+      'invalid-border-value': 'error',
+      'invalid-cubic-bezier': 'error',
+
       'broken-reference': 'error',
+      'circular-reference': 'error',
+      'duplicate-values': false,
+
+      'mode-consistency': false,
+      'missing-default-mode': 'error',
+
+      'hidden-from-publishing': false,
     },
   },
 };

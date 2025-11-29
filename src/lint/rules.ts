@@ -358,16 +358,509 @@ export const brokenReference: LintRule = {
 };
 
 // =============================================================================
+// Type-Specific Validation Rules
+// =============================================================================
+
+const VALID_DIMENSION_UNITS = ['px', 'rem', 'em', '%', 'vw', 'vh', 'dvh', 'svh', 'lvh'];
+const VALID_FONT_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900,
+  'thin', 'extralight', 'light', 'normal', 'medium', 'semibold', 'bold', 'extrabold', 'black'];
+const VALID_BORDER_STYLES = ['solid', 'dashed', 'dotted', 'double', 'groove', 'ridge', 'inset', 'outset', 'none'];
+
+/**
+ * Check for invalid dimension values
+ */
+export const invalidDimensionValue: LintRule = {
+  id: 'invalid-dimension-value',
+  name: 'Invalid Dimension Value',
+  description: 'Checks dimension tokens for valid values and units',
+  defaultSeverity: 'error',
+
+  check(theme: ThemeFile, context: LintRuleContext): void {
+    for (const collection of theme.collections) {
+      for (const [mode, tokens] of Object.entries(collection.tokens)) {
+        walkTokens(tokens as Record<string, unknown>, (token, path) => {
+          if (token.$type === 'dimension' && typeof token.$value === 'object' && !('$ref' in token.$value)) {
+            const dim = token.$value as { value?: number; unit?: string };
+
+            if (typeof dim.value !== 'number') {
+              context.report({
+                message: `Dimension value must be a number`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            } else if (dim.value < 0) {
+              context.report({
+                message: `Dimension value should not be negative: ${dim.value}`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+                suggestion: 'Use a positive value or zero',
+              });
+            }
+
+            if (!dim.unit || !VALID_DIMENSION_UNITS.includes(dim.unit)) {
+              context.report({
+                message: `Invalid dimension unit: "${dim.unit}"`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+                suggestion: `Valid units: ${VALID_DIMENSION_UNITS.join(', ')}`,
+              });
+            }
+          }
+        });
+      }
+    }
+  },
+};
+
+/**
+ * Check for invalid typography values
+ */
+export const invalidTypographyValue: LintRule = {
+  id: 'invalid-typography-value',
+  name: 'Invalid Typography Value',
+  description: 'Checks typography tokens for required fields and valid values',
+  defaultSeverity: 'error',
+
+  check(theme: ThemeFile, context: LintRuleContext): void {
+    for (const collection of theme.collections) {
+      for (const [mode, tokens] of Object.entries(collection.tokens)) {
+        walkTokens(tokens as Record<string, unknown>, (token, path) => {
+          if (token.$type === 'typography' && typeof token.$value === 'object' && !('$ref' in token.$value)) {
+            const typo = token.$value as Record<string, unknown>;
+
+            // Check required fields
+            if (!typo.fontFamily) {
+              context.report({
+                message: `Typography token missing required field: fontFamily`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            } else if (!Array.isArray(typo.fontFamily)) {
+              context.report({
+                message: `Typography fontFamily must be an array of font names`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            }
+
+            if (!typo.fontSize) {
+              context.report({
+                message: `Typography token missing required field: fontSize`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            }
+
+            if (typo.fontWeight !== undefined && !VALID_FONT_WEIGHTS.includes(typo.fontWeight as number | string)) {
+              context.report({
+                message: `Invalid font weight: "${typo.fontWeight}"`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+                suggestion: `Valid weights: 100-900 or ${VALID_FONT_WEIGHTS.filter(w => typeof w === 'string').join(', ')}`,
+              });
+            }
+          }
+        });
+      }
+    }
+  },
+};
+
+/**
+ * Check for invalid shadow values
+ */
+export const invalidShadowValue: LintRule = {
+  id: 'invalid-shadow-value',
+  name: 'Invalid Shadow Value',
+  description: 'Checks shadow tokens for required fields',
+  defaultSeverity: 'error',
+
+  check(theme: ThemeFile, context: LintRuleContext): void {
+    for (const collection of theme.collections) {
+      for (const [mode, tokens] of Object.entries(collection.tokens)) {
+        walkTokens(tokens as Record<string, unknown>, (token, path) => {
+          if (token.$type === 'shadow') {
+            const shadows = Array.isArray(token.$value) ? token.$value : [token.$value];
+
+            for (const shadow of shadows) {
+              if (typeof shadow !== 'object' || shadow === null || '$ref' in shadow) continue;
+
+              const s = shadow as Record<string, unknown>;
+              const requiredFields = ['offsetX', 'offsetY', 'blur', 'color'];
+
+              for (const field of requiredFields) {
+                if (!s[field]) {
+                  context.report({
+                    message: `Shadow token missing required field: ${field}`,
+                    path: path.join('.'),
+                    collection: `${collection.name}/${mode}`,
+                  });
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+  },
+};
+
+/**
+ * Check for invalid gradient values
+ */
+export const invalidGradientValue: LintRule = {
+  id: 'invalid-gradient-value',
+  name: 'Invalid Gradient Value',
+  description: 'Checks gradient tokens for valid type and stops',
+  defaultSeverity: 'error',
+
+  check(theme: ThemeFile, context: LintRuleContext): void {
+    const validTypes = ['linear', 'radial', 'conic'];
+
+    for (const collection of theme.collections) {
+      for (const [mode, tokens] of Object.entries(collection.tokens)) {
+        walkTokens(tokens as Record<string, unknown>, (token, path) => {
+          if (token.$type === 'gradient' && typeof token.$value === 'object' && !('$ref' in token.$value)) {
+            const grad = token.$value as Record<string, unknown>;
+
+            if (!grad.type || !validTypes.includes(grad.type as string)) {
+              context.report({
+                message: `Invalid gradient type: "${grad.type}"`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+                suggestion: `Valid types: ${validTypes.join(', ')}`,
+              });
+            }
+
+            if (!grad.stops || !Array.isArray(grad.stops)) {
+              context.report({
+                message: `Gradient must have stops array`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            } else if (grad.stops.length < 2) {
+              context.report({
+                message: `Gradient must have at least 2 stops`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            } else {
+              // Check stop positions
+              for (const stop of grad.stops as Array<{ position?: number }>) {
+                if (typeof stop.position !== 'number' || stop.position < 0 || stop.position > 1) {
+                  context.report({
+                    message: `Gradient stop position must be between 0 and 1`,
+                    path: path.join('.'),
+                    collection: `${collection.name}/${mode}`,
+                  });
+                  break;
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+  },
+};
+
+/**
+ * Check for invalid border values
+ */
+export const invalidBorderValue: LintRule = {
+  id: 'invalid-border-value',
+  name: 'Invalid Border Value',
+  description: 'Checks border tokens for required fields and valid styles',
+  defaultSeverity: 'error',
+
+  check(theme: ThemeFile, context: LintRuleContext): void {
+    for (const collection of theme.collections) {
+      for (const [mode, tokens] of Object.entries(collection.tokens)) {
+        walkTokens(tokens as Record<string, unknown>, (token, path) => {
+          if (token.$type === 'border' && typeof token.$value === 'object' && !('$ref' in token.$value)) {
+            const border = token.$value as Record<string, unknown>;
+
+            if (!border.width) {
+              context.report({
+                message: `Border token missing required field: width`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            }
+
+            if (!border.style) {
+              context.report({
+                message: `Border token missing required field: style`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            } else if (!VALID_BORDER_STYLES.includes(border.style as string)) {
+              context.report({
+                message: `Invalid border style: "${border.style}"`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+                suggestion: `Valid styles: ${VALID_BORDER_STYLES.join(', ')}`,
+              });
+            }
+
+            if (!border.color) {
+              context.report({
+                message: `Border token missing required field: color`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            }
+          }
+        });
+      }
+    }
+  },
+};
+
+/**
+ * Check for invalid cubic bezier values
+ */
+export const invalidCubicBezier: LintRule = {
+  id: 'invalid-cubic-bezier',
+  name: 'Invalid Cubic Bezier',
+  description: 'Checks cubic bezier tokens for valid control points',
+  defaultSeverity: 'error',
+
+  check(theme: ThemeFile, context: LintRuleContext): void {
+    for (const collection of theme.collections) {
+      for (const [mode, tokens] of Object.entries(collection.tokens)) {
+        walkTokens(tokens as Record<string, unknown>, (token, path) => {
+          if (token.$type === 'cubicBezier' && typeof token.$value === 'object' && !('$ref' in token.$value)) {
+            const bezier = token.$value as Record<string, unknown>;
+            const requiredPoints = ['x1', 'y1', 'x2', 'y2'];
+
+            for (const point of requiredPoints) {
+              if (typeof bezier[point] !== 'number') {
+                context.report({
+                  message: `Cubic bezier missing or invalid control point: ${point}`,
+                  path: path.join('.'),
+                  collection: `${collection.name}/${mode}`,
+                });
+              }
+            }
+
+            // x values must be between 0 and 1
+            if (typeof bezier.x1 === 'number' && (bezier.x1 < 0 || bezier.x1 > 1)) {
+              context.report({
+                message: `Cubic bezier x1 must be between 0 and 1`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            }
+            if (typeof bezier.x2 === 'number' && (bezier.x2 < 0 || bezier.x2 > 1)) {
+              context.report({
+                message: `Cubic bezier x2 must be between 0 and 1`,
+                path: path.join('.'),
+                collection: `${collection.name}/${mode}`,
+              });
+            }
+          }
+        });
+      }
+    }
+  },
+};
+
+/**
+ * Check for circular token references
+ */
+export const circularReference: LintRule = {
+  id: 'circular-reference',
+  name: 'Circular Reference',
+  description: 'Detects circular references between tokens',
+  defaultSeverity: 'error',
+
+  check(theme: ThemeFile, context: LintRuleContext): void {
+    // Build reference graph
+    const references = new Map<string, string[]>();
+
+    for (const collection of theme.collections) {
+      for (const [, tokens] of Object.entries(collection.tokens)) {
+        walkTokens(tokens as Record<string, unknown>, (token, path) => {
+          const tokenPath = path.join('.');
+
+          if (typeof token.$value === 'object' && token.$value !== null && '$ref' in token.$value) {
+            const ref = (token.$value as { $ref: string }).$ref.replace(/^\{|\}$/g, '');
+            const existing = references.get(tokenPath) || [];
+            existing.push(ref);
+            references.set(tokenPath, existing);
+          }
+        });
+      }
+    }
+
+    // Detect cycles using DFS
+    function hasCycle(start: string, visited: Set<string>, path: string[]): string[] | null {
+      if (path.includes(start)) {
+        return [...path, start];
+      }
+
+      if (visited.has(start)) return null;
+      visited.add(start);
+
+      const refs = references.get(start) || [];
+      for (const ref of refs) {
+        const cycle = hasCycle(ref, visited, [...path, start]);
+        if (cycle) return cycle;
+      }
+
+      return null;
+    }
+
+    const checked = new Set<string>();
+    for (const tokenPath of references.keys()) {
+      if (checked.has(tokenPath)) continue;
+
+      const cycle = hasCycle(tokenPath, new Set(), []);
+      if (cycle) {
+        context.report({
+          message: `Circular reference detected: ${cycle.join(' → ')}`,
+          path: tokenPath,
+          suggestion: 'Break the circular reference by using a concrete value',
+        });
+
+        // Mark all tokens in cycle as checked
+        for (const p of cycle) {
+          checked.add(p);
+        }
+      }
+    }
+  },
+};
+
+/**
+ * Check for mode consistency in collections
+ */
+export const modeConsistency: LintRule = {
+  id: 'mode-consistency',
+  name: 'Mode Consistency',
+  description: 'Checks that all modes in a collection have matching token paths',
+  defaultSeverity: 'warning',
+
+  check(theme: ThemeFile, context: LintRuleContext): void {
+    for (const collection of theme.collections) {
+      if (collection.modes.length <= 1) continue;
+
+      // Collect all token paths per mode
+      const modeTokens = new Map<string, Set<string>>();
+
+      for (const [mode, tokens] of Object.entries(collection.tokens)) {
+        const paths = new Set<string>();
+        walkTokens(tokens as Record<string, unknown>, (_, path) => {
+          paths.add(path.join('.'));
+        });
+        modeTokens.set(mode, paths);
+      }
+
+      // Compare modes
+      const allPaths = new Set<string>();
+      for (const paths of modeTokens.values()) {
+        for (const p of paths) allPaths.add(p);
+      }
+
+      for (const [mode, paths] of modeTokens.entries()) {
+        for (const p of allPaths) {
+          if (!paths.has(p)) {
+            context.report({
+              message: `Token "${p}" missing in mode "${mode}"`,
+              path: p,
+              collection: collection.name,
+              suggestion: `Add "${p}" to mode "${mode}" or remove from other modes`,
+            });
+          }
+        }
+      }
+    }
+  },
+};
+
+/**
+ * Check for missing default mode
+ */
+export const missingDefaultMode: LintRule = {
+  id: 'missing-default-mode',
+  name: 'Missing Default Mode',
+  description: 'Checks that collection defaultMode exists in modes array',
+  defaultSeverity: 'error',
+
+  check(theme: ThemeFile, context: LintRuleContext): void {
+    for (const collection of theme.collections) {
+      if (collection.defaultMode && !collection.modes.includes(collection.defaultMode)) {
+        context.report({
+          message: `Default mode "${collection.defaultMode}" not found in modes list`,
+          collection: collection.name,
+          suggestion: `Add "${collection.defaultMode}" to modes or change defaultMode to one of: ${collection.modes.join(', ')}`,
+        });
+      }
+    }
+  },
+};
+
+/**
+ * Warn about tokens hidden from Figma publishing
+ */
+export const hiddenFromPublishing: LintRule = {
+  id: 'hidden-from-publishing',
+  name: 'Hidden From Publishing',
+  description: 'Warns about tokens that are hidden from Figma publishing',
+  defaultSeverity: 'info',
+
+  check(theme: ThemeFile, context: LintRuleContext): void {
+    for (const collection of theme.collections) {
+      for (const [mode, tokens] of Object.entries(collection.tokens)) {
+        walkTokens(tokens as Record<string, unknown>, (token, path) => {
+          const figmaExt = token.$extensions?.['com.figma'];
+          if (figmaExt?.hiddenFromPublishing) {
+            context.report({
+              message: `Token is hidden from Figma publishing`,
+              path: path.join('.'),
+              collection: `${collection.name}/${mode}`,
+              suggestion: 'Consider whether this token should be included in output',
+            });
+          }
+        });
+      }
+    }
+  },
+};
+
+// =============================================================================
 // Export All Rules
 // =============================================================================
 
 export const allRules: LintRule[] = [
+  // Naming & Structure
   inconsistentNaming,
-  missingDescription,
-  duplicateValues,
-  invalidColorValue,
-  deepNesting,
   invalidTokenName,
+  deepNesting,
   emptyCollection,
+
+  // Documentation
+  missingDescription,
+
+  // Value Validation
+  invalidColorValue,
+  invalidDimensionValue,
+  invalidTypographyValue,
+  invalidShadowValue,
+  invalidGradientValue,
+  invalidBorderValue,
+  invalidCubicBezier,
+
+  // References
   brokenReference,
+  circularReference,
+  duplicateValues,
+
+  // Collection/Mode
+  modeConsistency,
+  missingDefaultMode,
+
+  // Figma-specific
+  hiddenFromPublishing,
 ];
