@@ -324,6 +324,17 @@ export interface PluginStatus {
 }
 
 /**
+ * Variable creation parameters for write client
+ */
+export interface VariableCreateParams {
+  name: string;
+  collectionName: string;
+  resolvedType: 'BOOLEAN' | 'FLOAT' | 'STRING' | 'COLOR';
+  valuesByMode: Record<string, unknown>;
+  description?: string;
+}
+
+/**
  * Write client interface for Plugin API integration
  */
 export interface WriteServerClient {
@@ -333,14 +344,14 @@ export interface WriteServerClient {
   getStatus(): Promise<PluginStatus>;
 
   /**
-   * Create/update/delete variables
+   * Create/update variables
    */
-  variables(params: PluginVariableParams[]): Promise<void>;
+  variables(params: VariableCreateParams[]): Promise<void>;
 
   /**
-   * Create/update/delete styles (text, paint, effect)
+   * Create/update styles (text, paint, effect)
    */
-  styles(params: PluginStyleParams[]): Promise<void>;
+  styles(params: Array<PluginTextStyleParams | PluginEffectStyleParams | PluginPaintStyleParams>): Promise<void>;
 }
 
 // =============================================================================

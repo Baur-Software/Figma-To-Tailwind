@@ -10,9 +10,12 @@ import type {
   FigmaOutputAdapterOptions,
   FigmaOutputResult,
   WriteServerClient,
+  VariableCreateParams,
 } from './types.js';
+import { PluginNotConnectedError } from './types.js';
 import { transformToFigmaVariables } from './transformer.js';
-import { checkSourceSafety } from './safety.js';
+import { extractStyleTokens } from './styles-transformer.js';
+import { checkSourceSafety, checkPluginSafety } from './safety.js';
 
 // =============================================================================
 // Adapter Class
@@ -74,22 +77,104 @@ export class FigmaOutputAdapter implements OutputAdapter<FigmaOutputResult> {
         // Check plugin connection
         const status = await this.writeClient!.getStatus();
         if (!status.connected) {
-          throw new Error('Figma plugin is not connected');
+          throw new PluginNotConnectedError();
         }
 
-        // For now, return a mock response
-        // Full Plugin API integration will be implemented in Phase 2
+        // Safety check against currently open file
+        checkPluginSafety(theme, status, options);
+
+        // Convert request body to write client format
+        const variableParams = this.convertToVariableParams(requestBody);
+
+        // Push variables
+        if (variableParams.length > 0) {
+          await this.writeClient!.variables(variableParams);
+        }
+
+        // Extract and push styles
+        const styleTokens = extractStyleTokens(theme, report);
+        const allStyles = [
+          ...styleTokens.textStyles,
+          ...styleTokens.effectStyles,
+          ...styleTokens.paintStyles,
+        ];
+
+        if (allStyles.length > 0) {
+          await this.writeClient!.styles(allStyles);
+        }
+
         return {
           status: 200,
           error: false,
           meta: {
             tempIdToRealId: {},
+            // Additional info (not part of standard response)
+            // variablesCreated: variableParams.length,
+            // stylesCreated: allStyles.length,
           },
         };
       };
     }
 
     return result;
+  }
+
+  /**
+   * Convert REST API request body to write client variable params
+   */
+  private convertToVariableParams(
+    requestBody: FigmaOutputResult['requestBody']
+  ): VariableCreateParams[] {
+    const params: VariableCreateParams[] = [];
+
+    // Build collection and mode ID maps
+    const collectionNames = new Map<string, string>();
+    for (const col of requestBody.variableCollections ?? []) {
+      if (col.action === 'CREATE' && col.id && col.name) {
+        collectionNames.set(col.id, col.name);
+      }
+    }
+
+    const modeNames = new Map<string, string>();
+    for (const col of requestBody.variableCollections ?? []) {
+      // Only CREATE actions have initialModeId
+      if (col.action === 'CREATE' && 'initialModeId' in col && col.initialModeId) {
+        // Initial mode uses collection's default mode name (we use 'default')
+        modeNames.set(col.initialModeId, 'default');
+      }
+    }
+    for (const mode of requestBody.variableModes ?? []) {
+      if (mode.action === 'CREATE' && mode.id && mode.name) {
+        modeNames.set(mode.id, mode.name);
+      }
+    }
+
+    // Convert variables
+    for (const variable of requestBody.variables ?? []) {
+      if (variable.action !== 'CREATE' || !variable.id) continue;
+
+      const collectionName = collectionNames.get(variable.variableCollectionId ?? '');
+      if (!collectionName) continue;
+
+      // Gather values by mode
+      const valuesByMode: Record<string, unknown> = {};
+      for (const modeValue of requestBody.variableModeValues ?? []) {
+        if (modeValue.variableId === variable.id) {
+          const modeName = modeNames.get(modeValue.modeId ?? '') ?? 'default';
+          valuesByMode[modeName] = modeValue.value;
+        }
+      }
+
+      params.push({
+        name: variable.name ?? '',
+        collectionName,
+        resolvedType: variable.resolvedType as 'BOOLEAN' | 'FLOAT' | 'STRING' | 'COLOR',
+        valuesByMode,
+        description: variable.description,
+      });
+    }
+
+    return params;
   }
 
   /**

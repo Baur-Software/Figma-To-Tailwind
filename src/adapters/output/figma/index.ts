@@ -26,6 +26,14 @@ export { TransformationReportBuilder, createReport } from './report.js';
 // Safety
 export { checkSourceSafety, checkPluginSafety } from './safety.js';
 
+// Write Client
+export {
+  FigmaWriteClient,
+  createWriteClient,
+  tryConnectWriteServer,
+} from './write-client.js';
+export type { WriteClientOptions } from './write-client.js';
+
 // Types
 export type {
   FigmaOutputAdapterOptions,
@@ -43,6 +51,7 @@ export type {
   PluginPaintStyleParams,
   PluginStatus,
   WriteServerClient,
+  VariableCreateParams,
   FigmaRGBA,
   FigmaTextStyle,
   FigmaEffectStyle,
