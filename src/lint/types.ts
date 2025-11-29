@@ -53,8 +53,14 @@ export interface LintRule {
 }
 
 export interface LintConfig {
+  /** Extend another config (path or preset name) */
+  extends?: string | string[];
   /** Rules to enable/disable or configure */
   rules?: {
     [ruleId: string]: boolean | LintSeverity;
   };
+  /** Token paths to ignore (glob patterns) */
+  ignorePatterns?: string[];
+  /** Collections to ignore */
+  ignoreCollections?: string[];
 }

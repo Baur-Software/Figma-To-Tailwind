@@ -2,7 +2,7 @@
 
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
-import { figmaToTailwind, parseTheme, lintTheme, type LintConfig } from './index.js';
+import { figmaToTailwind, parseTheme, lintTheme, loadConfig, findConfigFile, type LintConfig } from './index.js';
 import type { GetLocalVariablesResponse } from '@figma/rest-api-spec';
 
 // ANSI color codes for diff output
@@ -41,7 +41,14 @@ Sync Options:
 Lint Options:
   --file-key <key>            Figma file key (required, or set FIGMA_FILE_KEY)
   --token <token>             Figma API token (required, or set FIGMA_TOKEN)
-  --strict                    Treat warnings as errors
+  --config <path>             Path to config file (default: auto-detect)
+  --strict                    Use 'strict' preset (treat warnings as errors)
+
+Config Files (searched in order):
+  figma-to.config.js, .figmatorc.js, .figmatorc.json, .figmatorc
+  Or "figma-to" field in package.json
+
+Presets: recommended (default), strict, minimal
 
 Examples:
   figma-to sync --file-key abc123 --token figd_xxx
@@ -244,7 +251,12 @@ async function sync(args: string[]) {
   if (opts['lint'] === 'true') {
     console.log('\nRunning linter...\n');
     const theme = await parseTheme({ variablesResponse, fileKey });
-    printLintResults(lintTheme(theme));
+    const foundConfig = findConfigFile();
+    const config = await loadConfig();
+    if (foundConfig) {
+      console.log(`Using config: ${colors.cyan}${foundConfig}${colors.reset}\n`);
+    }
+    printLintResults(lintTheme(theme, config));
   }
 }
 
@@ -308,6 +320,7 @@ async function lint(args: string[]): Promise<void> {
 
   const fileKey = opts['file-key'] || process.env.FIGMA_FILE_KEY;
   const token = opts['token'] || process.env.FIGMA_TOKEN;
+  const configPath = opts['config'];
   const strict = opts['strict'] === 'true';
 
   if (!fileKey) {
@@ -318,6 +331,25 @@ async function lint(args: string[]): Promise<void> {
   if (!token) {
     console.error('Error: --token or FIGMA_TOKEN is required');
     process.exit(1);
+  }
+
+  // Load config from file or use preset
+  let config: LintConfig;
+  if (strict) {
+    config = await loadConfig(); // Load base config
+    config = { ...config, extends: 'strict' }; // Override with strict preset
+    console.log(`Using ${colors.cyan}strict${colors.reset} preset`);
+  } else if (configPath) {
+    config = await loadConfig(configPath);
+    console.log(`Using config: ${colors.cyan}${configPath}${colors.reset}`);
+  } else {
+    const foundConfig = findConfigFile();
+    config = await loadConfig();
+    if (foundConfig) {
+      console.log(`Using config: ${colors.cyan}${foundConfig}${colors.reset}`);
+    } else {
+      console.log(`Using ${colors.cyan}recommended${colors.reset} preset (no config file found)`);
+    }
   }
 
   console.log(`Fetching variables from Figma file ${fileKey}...`);
@@ -340,16 +372,6 @@ async function lint(args: string[]): Promise<void> {
   const theme = await parseTheme({ variablesResponse, fileKey });
 
   console.log('Running linter...\n');
-
-  // Configure based on --strict
-  const config: LintConfig = strict ? {
-    rules: {
-      'inconsistent-naming': 'error',
-      'missing-description': 'warning',
-      'duplicate-values': 'warning',
-      'deep-nesting': 'error',
-    },
-  } : {};
 
   const result = lintTheme(theme, config);
   printLintResults(result);
