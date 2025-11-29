@@ -11,16 +11,16 @@ import type {
   ThemeFile,
   TokenGroup,
   Token,
-} from '../../schema/tokens.js';
+} from '../../../schema/tokens.js';
 import type {
   TailwindThemeOutput,
   ThemeVariable,
-} from '../../schema/tailwind.js';
-import { isTokenReference } from '../../schema/tokens.js';
+} from '../../../schema/tailwind.js';
+import { isTokenReference } from '../../../schema/tokens.js';
 import { tokenValueToCss, colorToOklch, colorToHex } from './converters.js';
-import type { ColorValue } from '../../schema/tokens.js';
-import { tokenTypeRegistry } from '../../registry/index.js';
-import type { TailwindNamespace } from '../../registry/types.js';
+import type { ColorValue } from '../../../schema/tokens.js';
+import { tokenTypeRegistry } from '../../../registry/index.js';
+import type { TailwindNamespace } from '../../../registry/types.js';
 
 // =============================================================================
 // Token Traversal Utilities

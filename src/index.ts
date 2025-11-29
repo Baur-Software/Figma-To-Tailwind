@@ -38,21 +38,21 @@ export {
   FigmaAdapter,
   createFigmaAdapter,
   type FigmaInput,
-} from './adapters/figma/index.js';
+} from './adapters/input/figma/index.js';
 
 export {
   TailwindIonicAdapter,
   createTailwindIonicAdapter,
   type TailwindIonicOutput,
   type TailwindIonicAdapterOptions,
-} from './adapters/tailwind-ionic/index.js';
+} from './adapters/output/tailwind-ionic/index.js';
 
 export {
   ScssAdapter,
   createScssAdapter,
   type ScssOutput,
   type ScssAdapterOptions,
-} from './adapters/scss/index.js';
+} from './adapters/output/scss/index.js';
 
 // =============================================================================
 // Linting
@@ -78,17 +78,17 @@ export {
 // Convenience Functions
 // =============================================================================
 
-import { createFigmaAdapter, type FigmaInput } from './adapters/figma/index.js';
+import { createFigmaAdapter, type FigmaInput } from './adapters/input/figma/index.js';
 import {
   createTailwindIonicAdapter,
   type TailwindIonicAdapterOptions,
   type TailwindIonicOutput,
-} from './adapters/tailwind-ionic/index.js';
+} from './adapters/output/tailwind-ionic/index.js';
 import {
   createScssAdapter,
   type ScssAdapterOptions,
   type ScssOutput,
-} from './adapters/scss/index.js';
+} from './adapters/output/scss/index.js';
 import type { ThemeFile } from './schema/tokens.js';
 
 /**

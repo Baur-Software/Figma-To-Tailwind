@@ -5,8 +5,8 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { createFigmaAdapter } from '../../dist/adapters/figma/index.js';
-import { createTailwindIonicAdapter } from '../../dist/adapters/tailwind-ionic/index.js';
+import { createFigmaAdapter } from '../../dist/adapters/input/figma/index.js';
+import { createTailwindIonicAdapter } from '../../dist/adapters/output/tailwind-ionic/index.js';
 import { mockFigmaVariablesResponse } from './fixtures/figma-variables.js';
 
 test.describe('Tailwind/Ionic Output Adapter', () => {

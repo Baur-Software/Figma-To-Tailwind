@@ -6,11 +6,11 @@
  */
 
 import type { GetLocalVariablesResponse } from '@figma/rest-api-spec';
-import type { FigmaMCPDataResponse, MCPVariableDefs } from '../../schema/figma.js';
+import type { FigmaMCPDataResponse, MCPVariableDefs } from '../../../schema/figma.js';
 import type {
   ThemeFile,
   InputAdapter,
-} from '../../schema/tokens.js';
+} from '../../../schema/tokens.js';
 import { parseVariables, parseVariableDefs } from './parser.js';
 
 // =============================================================================

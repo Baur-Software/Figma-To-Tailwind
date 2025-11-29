@@ -15,7 +15,7 @@ import type {
   DimensionValue,
   TypographyValue,
   ShadowValue,
-} from '../../schema/tokens.js';
+} from '../../../schema/tokens.js';
 
 // =============================================================================
 // Output Types

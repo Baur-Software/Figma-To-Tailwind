@@ -5,8 +5,8 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { createFigmaAdapter } from '../../dist/adapters/figma/index.js';
-import { createScssAdapter } from '../../dist/adapters/scss/index.js';
+import { createFigmaAdapter } from '../../dist/adapters/input/figma/index.js';
+import { createScssAdapter } from '../../dist/adapters/output/scss/index.js';
 import { figmaToScss } from '../../dist/index.js';
 import {
   mockFigmaVariablesResponse,

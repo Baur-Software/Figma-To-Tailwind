@@ -19,9 +19,9 @@ import type {
   Token,
   TokenType,
   TokenReference,
-} from '../../schema/tokens.js';
-import { isTokenReference } from '../../schema/tokens.js';
-import { tokenTypeRegistry } from '../../registry/index.js';
+} from '../../../schema/tokens.js';
+import { isTokenReference } from '../../../schema/tokens.js';
+import { tokenTypeRegistry } from '../../../registry/index.js';
 
 // Re-export utilities from registry handlers for backward compatibility
 export {
@@ -29,12 +29,12 @@ export {
   colorToRgb,
   colorToOklch,
   colorToRgbTriplet,
-} from '../../registry/handlers/color.js';
-export { dimensionToCss, pxToRem } from '../../registry/handlers/dimension.js';
+} from '../../../registry/handlers/color.js';
+export { dimensionToCss, pxToRem } from '../../../registry/handlers/dimension.js';
 
 // Import locally used utilities
-import { colorToRgb } from '../../registry/handlers/color.js';
-import { dimensionToCss } from '../../registry/handlers/dimension.js';
+import { colorToRgb } from '../../../registry/handlers/color.js';
+import { dimensionToCss } from '../../../registry/handlers/dimension.js';
 
 // =============================================================================
 // Legacy Color/Dimension Converters (now provided by registry handlers)

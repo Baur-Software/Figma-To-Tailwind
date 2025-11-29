@@ -5,8 +5,8 @@
  * with Ionic framework integration for SolidJS/Capacitor apps.
  */
 
-import type { ThemeFile, OutputAdapter, OutputAdapterOptions } from '../../schema/tokens.js';
-import type { TailwindThemeOutput } from '../../schema/tailwind.js';
+import type { ThemeFile, OutputAdapter, OutputAdapterOptions } from '../../../schema/tokens.js';
+import type { TailwindThemeOutput } from '../../../schema/tailwind.js';
 import type { IonicGeneratorOutput } from './ionic-generator.js';
 import {
   generateTailwindTheme,

@@ -9,14 +9,14 @@ import type {
   TokenGroup,
   Token,
   ColorValue,
-} from '../../schema/tokens.js';
+} from '../../../schema/tokens.js';
 import type {
   IonicTheme,
   IonicColorVariables,
   IonicColorName,
-} from '../../schema/ionic.js';
-import { IONIC_COLOR_NAMES } from '../../schema/ionic.js';
-import { isTokenReference } from '../../schema/tokens.js';
+} from '../../../schema/ionic.js';
+import { IONIC_COLOR_NAMES } from '../../../schema/ionic.js';
+import { isTokenReference } from '../../../schema/tokens.js';
 import {
   colorToHex,
   colorToRgbTriplet,

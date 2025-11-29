@@ -5,7 +5,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { createFigmaAdapter } from '../../dist/adapters/figma/index.js';
+import { createFigmaAdapter } from '../../dist/adapters/input/figma/index.js';
 import {
   mockFigmaVariablesResponse,
   mockFigmaMCPResponse,

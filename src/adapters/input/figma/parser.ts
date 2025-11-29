@@ -20,10 +20,10 @@ import type {
   DimensionValue,
   TokenReference,
   FigmaExtensions,
-} from '../../schema/tokens.js';
-import { isRGBA, isVariableAlias } from '../../schema/figma.js';
-import { tokenTypeRegistry } from '../../registry/index.js';
-import type { FigmaDetectionContext, VariableDefsContext } from '../../registry/types.js';
+} from '../../../schema/tokens.js';
+import { isRGBA, isVariableAlias } from '../../../schema/figma.js';
+import { tokenTypeRegistry } from '../../../registry/index.js';
+import type { FigmaDetectionContext, VariableDefsContext } from '../../../registry/types.js';
 
 /**
  * Variable value type from Figma's valuesByMode
