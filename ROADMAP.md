@@ -64,7 +64,7 @@ This document outlines planned features and improvements for `@baur-software/fig
 
 ### Validation & Tooling
 
-- [ ] **Token linting** - Warn on naming inconsistencies
+- [x] **Token linting** - Warn on naming inconsistencies
 - [x] **Diff output** - Show what changed between syncs
 - [x] **Dry run mode** - Preview output without writing files
 - [ ] **Migration helpers** - Upgrade paths between major versions

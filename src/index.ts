@@ -55,6 +55,22 @@ export {
 } from './adapters/scss/index.js';
 
 // =============================================================================
+// Linting
+// =============================================================================
+
+export {
+  TokenLinter,
+  createLinter,
+  lintTheme,
+  allRules,
+  type LintConfig,
+  type LintMessage,
+  type LintResult,
+  type LintRule,
+  type LintSeverity,
+} from './lint/index.js';
+
+// =============================================================================
 // Convenience Functions
 // =============================================================================
 

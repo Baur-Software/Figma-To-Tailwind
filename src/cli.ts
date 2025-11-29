@@ -2,7 +2,7 @@
 
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
-import { figmaToTailwind } from './index.js';
+import { figmaToTailwind, parseTheme, lintTheme, type LintConfig } from './index.js';
 import type { GetLocalVariablesResponse } from '@figma/rest-api-spec';
 
 // ANSI color codes for diff output
@@ -24,6 +24,7 @@ function printHelp() {
 
 Usage:
   figma-to sync [options]     Sync Figma variables to CSS files
+  figma-to lint [options]     Lint tokens for issues
   figma-to --help             Show this help message
   figma-to --version          Show version
 
@@ -35,11 +36,17 @@ Sync Options:
   --framework <name>          Framework: solidjs, react, vue, angular
   --dry-run                   Preview output without writing files
   --diff                      Show what would change (implies --dry-run)
+  --lint                      Run linting after sync
+
+Lint Options:
+  --file-key <key>            Figma file key (required, or set FIGMA_FILE_KEY)
+  --token <token>             Figma API token (required, or set FIGMA_TOKEN)
+  --strict                    Treat warnings as errors
 
 Examples:
   figma-to sync --file-key abc123 --token figd_xxx
-  FIGMA_FILE_KEY=abc123 FIGMA_TOKEN=figd_xxx figma-to sync
-  figma-to sync --out src/styles --format hex
+  figma-to sync --lint        # Sync and lint
+  figma-to lint               # Lint only
   figma-to sync --dry-run     # Preview without writing
   figma-to sync --diff        # Show changes
 `);
@@ -232,6 +239,125 @@ async function sync(args: string[]) {
   }
 
   console.log('\nDone! Theme files generated successfully.');
+
+  // Run linting if requested
+  if (opts['lint'] === 'true') {
+    console.log('\nRunning linter...\n');
+    const theme = await parseTheme({ variablesResponse, fileKey });
+    printLintResults(lintTheme(theme));
+  }
+}
+
+/**
+ * Format and print lint results
+ */
+function printLintResults(result: ReturnType<typeof lintTheme>): void {
+  const severityColors: Record<string, string> = {
+    error: colors.red,
+    warning: colors.yellow,
+    info: colors.cyan,
+  };
+
+  const severityIcons: Record<string, string> = {
+    error: '✖',
+    warning: '⚠',
+    info: 'ℹ',
+  };
+
+  if (result.messages.length === 0) {
+    console.log(`${colors.green}✓ No lint issues found${colors.reset}`);
+    return;
+  }
+
+  // Group by collection/path
+  for (const msg of result.messages) {
+    const icon = severityIcons[msg.severity] || '•';
+    const color = severityColors[msg.severity] || '';
+
+    let location = '';
+    if (msg.collection) location += `${msg.collection}`;
+    if (msg.path) location += location ? ` > ${msg.path}` : msg.path;
+
+    console.log(`${color}${icon} [${msg.rule}]${colors.reset} ${msg.message}`);
+    if (location) {
+      console.log(`  ${colors.dim}at ${location}${colors.reset}`);
+    }
+    if (msg.suggestion) {
+      console.log(`  ${colors.dim}→ ${msg.suggestion}${colors.reset}`);
+    }
+  }
+
+  console.log('');
+  const summary: string[] = [];
+  if (result.errorCount > 0) summary.push(`${colors.red}${result.errorCount} error(s)${colors.reset}`);
+  if (result.warningCount > 0) summary.push(`${colors.yellow}${result.warningCount} warning(s)${colors.reset}`);
+  if (result.infoCount > 0) summary.push(`${colors.cyan}${result.infoCount} info${colors.reset}`);
+
+  console.log(`Found ${summary.join(', ')}`);
+
+  if (!result.passed) {
+    console.log(`\n${colors.red}Linting failed${colors.reset}`);
+  }
+}
+
+/**
+ * Lint command - lint tokens without syncing
+ */
+async function lint(args: string[]): Promise<void> {
+  const opts = parseArgs(args);
+
+  const fileKey = opts['file-key'] || process.env.FIGMA_FILE_KEY;
+  const token = opts['token'] || process.env.FIGMA_TOKEN;
+  const strict = opts['strict'] === 'true';
+
+  if (!fileKey) {
+    console.error('Error: --file-key or FIGMA_FILE_KEY is required');
+    process.exit(1);
+  }
+
+  if (!token) {
+    console.error('Error: --token or FIGMA_TOKEN is required');
+    process.exit(1);
+  }
+
+  console.log(`Fetching variables from Figma file ${fileKey}...`);
+
+  const response = await fetch(
+    `https://api.figma.com/v1/files/${fileKey}/variables/local`,
+    { headers: { 'X-Figma-Token': token } }
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    console.error(`Figma API error: ${response.status} ${response.statusText}`);
+    console.error(text);
+    process.exit(1);
+  }
+
+  const variablesResponse = await response.json() as GetLocalVariablesResponse;
+
+  console.log('Parsing theme...');
+  const theme = await parseTheme({ variablesResponse, fileKey });
+
+  console.log('Running linter...\n');
+
+  // Configure based on --strict
+  const config: LintConfig = strict ? {
+    rules: {
+      'inconsistent-naming': 'error',
+      'missing-description': 'warning',
+      'duplicate-values': 'warning',
+      'deep-nesting': 'error',
+    },
+  } : {};
+
+  const result = lintTheme(theme, config);
+  printLintResults(result);
+
+  // Exit with error code if linting failed
+  if (!result.passed || (strict && result.warningCount > 0)) {
+    process.exit(1);
+  }
 }
 
 async function main() {
@@ -248,6 +374,8 @@ async function main() {
 
   if (command === 'sync') {
     await sync(args.slice(1));
+  } else if (command === 'lint') {
+    await lint(args.slice(1));
   } else {
     console.error(`Unknown command: ${command}`);
     printHelp();
