@@ -54,6 +54,44 @@ export {
   type ScssAdapterOptions,
 } from './adapters/output/scss/index.js';
 
+// Figma Output Adapter
+export {
+  FigmaOutputAdapter,
+  createFigmaOutputAdapter,
+  transformToFigmaVariables,
+  resetIdCounter,
+  TransformationReportBuilder,
+  createReport,
+  checkSourceSafety,
+  checkPluginSafety,
+  FigmaWriteClient,
+  createWriteClient,
+  tryConnectWriteServer,
+  SourceOverwriteError,
+  PluginNotConnectedError,
+  type FigmaOutputAdapterOptions,
+  type FigmaOutputResult,
+  type TransformationReport,
+  type WriteServerClient,
+  type PluginStatus,
+} from './adapters/output/figma/index.js';
+
+// CSS Input Adapter
+export {
+  CSSAdapter,
+  createCSSAdapter,
+  type CSSInput,
+  type CSSParseOptions,
+} from './adapters/input/css/index.js';
+
+// SCSS Input Adapter
+export {
+  SCSSAdapter,
+  createSCSSAdapter,
+  type SCSSInput,
+  type SCSSParseOptions,
+} from './adapters/input/scss/index.js';
+
 // =============================================================================
 // Linting
 // =============================================================================

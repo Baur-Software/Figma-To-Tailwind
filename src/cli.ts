@@ -2,7 +2,18 @@
 
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
-import { figmaToTailwind, parseTheme, lintTheme, loadConfig, findConfigFile, type LintConfig } from './index.js';
+import {
+  figmaToTailwind,
+  parseTheme,
+  lintTheme,
+  loadConfig,
+  findConfigFile,
+  createFigmaOutputAdapter,
+  createCSSAdapter,
+  createSCSSAdapter,
+  tryConnectWriteServer,
+  type LintConfig,
+} from './index.js';
 import type { GetLocalVariablesResponse } from '@figma/rest-api-spec';
 
 // ANSI color codes for diff output
@@ -24,6 +35,7 @@ function printHelp() {
 
 Usage:
   figma-to sync [options]     Sync Figma variables to CSS files
+  figma-to push [options]     Push tokens to Figma (via Plugin API or REST)
   figma-to lint [options]     Lint tokens for issues
   figma-to --help             Show this help message
   figma-to --version          Show version
@@ -37,6 +49,15 @@ Sync Options:
   --dry-run                   Preview output without writing files
   --diff                      Show what would change (implies --dry-run)
   --lint                      Run linting after sync
+
+Push Options:
+  --source <file>             Source file (CSS or SCSS)
+  --source-figma <key>        Source Figma file key (pulls tokens from Figma)
+  --target <key>              Target Figma file key (required)
+  --token <token>             Figma API token (for source-figma, or set FIGMA_TOKEN)
+  --dry-run                   Preview what would be pushed
+  --json                      Output REST API JSON instead of pushing
+  --allow-overwrite           Allow pushing to source file
 
 Lint Options:
   --file-key <key>            Figma file key (required, or set FIGMA_FILE_KEY)
@@ -56,6 +77,15 @@ Examples:
   figma-to lint               # Lint only
   figma-to sync --dry-run     # Preview without writing
   figma-to sync --diff        # Show changes
+
+  # Push from CSS file to Figma
+  figma-to push --source theme.css --target abc123
+
+  # Push from one Figma file to another
+  figma-to push --source-figma source123 --target dest456 --token figd_xxx
+
+  # Preview push (dry-run)
+  figma-to push --source theme.scss --target abc123 --dry-run
 `);
 }
 
@@ -382,6 +412,159 @@ async function lint(args: string[]): Promise<void> {
   }
 }
 
+/**
+ * Push command - push tokens to Figma
+ */
+async function push(args: string[]): Promise<void> {
+  const opts = parseArgs(args);
+
+  const sourceFile = opts['source'];
+  const sourceFigma = opts['source-figma'];
+  const targetKey = opts['target'];
+  const token = opts['token'] || process.env.FIGMA_TOKEN;
+  const dryRun = opts['dry-run'] === 'true';
+  const jsonOutput = opts['json'] === 'true';
+  const allowOverwrite = opts['allow-overwrite'] === 'true';
+
+  // Validate options
+  if (!sourceFile && !sourceFigma) {
+    console.error('Error: Either --source or --source-figma is required');
+    process.exit(1);
+  }
+
+  if (sourceFile && sourceFigma) {
+    console.error('Error: Cannot specify both --source and --source-figma');
+    process.exit(1);
+  }
+
+  if (!targetKey) {
+    console.error('Error: --target is required');
+    process.exit(1);
+  }
+
+  if (sourceFigma && !token) {
+    console.error('Error: --token or FIGMA_TOKEN is required when using --source-figma');
+    process.exit(1);
+  }
+
+  let theme;
+
+  // Parse source
+  if (sourceFile) {
+    // Parse from local file (CSS or SCSS)
+    if (!existsSync(sourceFile)) {
+      console.error(`Error: Source file not found: ${sourceFile}`);
+      process.exit(1);
+    }
+
+    const content = readFileSync(sourceFile, 'utf-8');
+    const ext = sourceFile.toLowerCase();
+
+    console.log(`Parsing ${sourceFile}...`);
+
+    if (ext.endsWith('.scss') || ext.endsWith('.sass')) {
+      const adapter = createSCSSAdapter();
+      theme = await adapter.parse({ scss: content, fileName: sourceFile });
+    } else {
+      // Assume CSS for .css or any other extension
+      const adapter = createCSSAdapter();
+      theme = await adapter.parse({ css: content, fileName: sourceFile });
+    }
+  } else {
+    // Parse from Figma
+    console.log(`Fetching variables from Figma file ${sourceFigma}...`);
+
+    const response = await fetch(
+      `https://api.figma.com/v1/files/${sourceFigma}/variables/local`,
+      { headers: { 'X-Figma-Token': token! } }
+    );
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error(`Figma API error: ${response.status} ${response.statusText}`);
+      console.error(text);
+      process.exit(1);
+    }
+
+    const variablesResponse = await response.json() as GetLocalVariablesResponse;
+    theme = await parseTheme({ variablesResponse, fileKey: sourceFigma });
+  }
+
+  // Transform to Figma format
+  console.log('Transforming tokens to Figma format...');
+
+  const outputAdapter = createFigmaOutputAdapter();
+  const result = await outputAdapter.transform(theme, {
+    targetFileKey: targetKey,
+    allowSourceOverwrite: allowOverwrite,
+  });
+
+  // Print report
+  console.log('\n' + result.report.toString());
+
+  // Handle output mode
+  if (jsonOutput) {
+    console.log('\nREST API Request Body:');
+    console.log(JSON.stringify(result.requestBody, null, 2));
+    console.log('\n' + result.getManualInstructions());
+    return;
+  }
+
+  if (dryRun) {
+    console.log(`\n${colors.yellow}Dry run mode - nothing will be pushed${colors.reset}`);
+    console.log('\nTo push, run without --dry-run');
+    console.log('Or use --json to get the REST API request body');
+    return;
+  }
+
+  // Try to connect to write server
+  console.log('\nConnecting to figma-mcp-write-server...');
+  const writeClient = await tryConnectWriteServer();
+
+  if (!writeClient) {
+    console.log(`${colors.yellow}Write server not available.${colors.reset}`);
+    console.log('\nTo push via Plugin API:');
+    console.log('  1. Run: npx figma-mcp-write-server');
+    console.log('  2. Open Figma Desktop and activate the write-server plugin');
+    console.log('  3. Run this command again\n');
+    console.log('Alternatively, use --json to get the REST API request body.\n');
+    console.log(result.getManualInstructions());
+    process.exit(1);
+  }
+
+  // Check plugin status
+  const status = await writeClient.getStatus();
+  if (!status.connected) {
+    console.error(`${colors.red}Figma plugin not connected.${colors.reset}`);
+    console.log('Ensure Figma Desktop is open with the write-server plugin active.');
+    writeClient.disconnect();
+    process.exit(1);
+  }
+
+  // Check if target matches currently open file
+  if (status.fileKey && status.fileKey !== targetKey) {
+    console.log(`${colors.yellow}Warning: Target file (${targetKey}) differs from open file (${status.fileKey})${colors.reset}`);
+    console.log('The push will go to the currently open file in Figma.\n');
+  }
+
+  console.log(`Connected to Figma: ${status.file || 'Unknown file'}`);
+  console.log('Pushing tokens...\n');
+
+  // Push using write client
+  const outputAdapterWithClient = createFigmaOutputAdapter(writeClient);
+  const resultWithExecute = await outputAdapterWithClient.transform(theme, {
+    targetFileKey: targetKey,
+    allowSourceOverwrite: allowOverwrite,
+  });
+
+  if (resultWithExecute.execute) {
+    await resultWithExecute.execute();
+    console.log(`${colors.green}✓ Tokens pushed successfully!${colors.reset}`);
+  }
+
+  writeClient.disconnect();
+}
+
 async function main() {
   if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
     printHelp();
@@ -396,6 +579,8 @@ async function main() {
 
   if (command === 'sync') {
     await sync(args.slice(1));
+  } else if (command === 'push') {
+    await push(args.slice(1));
   } else if (command === 'lint') {
     await lint(args.slice(1));
   } else {
