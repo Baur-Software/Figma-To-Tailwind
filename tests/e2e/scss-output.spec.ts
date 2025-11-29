@@ -10,7 +10,7 @@ import { createScssAdapter } from '../../dist/adapters/scss/index.js';
 import { figmaToScss } from '../../dist/index.js';
 import {
   mockFigmaVariablesResponse,
-  mockSimplifiedMCPVariables,
+  mockMCPVariableDefs,
 } from './fixtures/figma-variables.js';
 
 test.describe('SCSS Output Adapter', () => {
@@ -30,7 +30,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('generates color variables in hex format by default', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       // Check for hex color format
@@ -39,7 +39,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('generates color variables in rgb format when specified', async () => {
       const output = await figmaToScss(
-        { simplifiedVariables: mockSimplifiedMCPVariables },
+        { variableDefs: mockMCPVariableDefs },
         { colorFormat: 'rgb' }
       );
 
@@ -48,7 +48,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('generates color variables in hsl format when specified', async () => {
       const output = await figmaToScss(
-        { simplifiedVariables: mockSimplifiedMCPVariables },
+        { variableDefs: mockMCPVariableDefs },
         { colorFormat: 'hsl' }
       );
 
@@ -57,7 +57,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('includes !default flag by default', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.variables).toContain('!default');
@@ -65,7 +65,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('omits !default flag when disabled', async () => {
       const output = await figmaToScss(
-        { simplifiedVariables: mockSimplifiedMCPVariables },
+        { variableDefs: mockMCPVariableDefs },
         { useDefault: false }
       );
 
@@ -74,7 +74,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('applies variable prefix when specified', async () => {
       const output = await figmaToScss(
-        { simplifiedVariables: mockSimplifiedMCPVariables },
+        { variableDefs: mockMCPVariableDefs },
         { prefix: 'ds' }
       );
 
@@ -85,7 +85,7 @@ test.describe('SCSS Output Adapter', () => {
   test.describe('Map Generation', () => {
     test('generates $colors map', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.maps).toContain('$colors:');
@@ -95,7 +95,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('generates $fonts map when font tokens exist', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.maps).toContain('$fonts:');
@@ -103,7 +103,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('can disable map generation', async () => {
       const output = await figmaToScss(
-        { simplifiedVariables: mockSimplifiedMCPVariables },
+        { variableDefs: mockMCPVariableDefs },
         { generateMaps: false }
       );
 
@@ -114,7 +114,7 @@ test.describe('SCSS Output Adapter', () => {
   test.describe('Mixin Generation', () => {
     test('generates color() function', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.mixins).toContain('@function color($name)');
@@ -123,7 +123,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('generates spacing() function', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.mixins).toContain('@function spacing($name)');
@@ -131,7 +131,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('generates typography mixin', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.mixins).toContain('@mixin typography($style)');
@@ -139,7 +139,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('generates respond-to mixin', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.mixins).toContain('@mixin respond-to($breakpoint)');
@@ -148,7 +148,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('can disable mixin generation', async () => {
       const output = await figmaToScss(
-        { simplifiedVariables: mockSimplifiedMCPVariables },
+        { variableDefs: mockMCPVariableDefs },
         { generateMixins: false }
       );
 
@@ -159,7 +159,7 @@ test.describe('SCSS Output Adapter', () => {
   test.describe('File Generation', () => {
     test('generates _variables.scss file', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.files['_variables.scss']).toBeDefined();
@@ -168,7 +168,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('generates _maps.scss file', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.files['_maps.scss']).toBeDefined();
@@ -177,7 +177,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('generates _mixins.scss file', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.files['_mixins.scss']).toBeDefined();
@@ -186,7 +186,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('generates _index.scss with @forward statements', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.files['_index.scss']).toBeDefined();
@@ -199,7 +199,7 @@ test.describe('SCSS Output Adapter', () => {
   test.describe('Combined Output', () => {
     test('generates combined scss output', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       // Should contain all sections
@@ -210,7 +210,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('includes comments by default', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(output.scss).toContain('// ');
@@ -219,7 +219,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('can disable comments', async () => {
       const output = await figmaToScss(
-        { simplifiedVariables: mockSimplifiedMCPVariables },
+        { variableDefs: mockMCPVariableDefs },
         { format: { comments: false } }
       );
 
@@ -230,7 +230,7 @@ test.describe('SCSS Output Adapter', () => {
   test.describe('Token Type Handling', () => {
     test('formats dimension tokens with units', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       // Spacing tokens should have px unit
@@ -239,7 +239,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('formats typography tokens as maps', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       // Typography should contain font properties
@@ -248,7 +248,7 @@ test.describe('SCSS Output Adapter', () => {
 
     test('formats shadow tokens correctly', async () => {
       const output = await figmaToScss({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       // Shadow tokens should be formatted

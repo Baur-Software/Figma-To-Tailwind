@@ -9,7 +9,7 @@ import { createFigmaAdapter } from '../../dist/adapters/figma/index.js';
 import {
   mockFigmaVariablesResponse,
   mockFigmaMCPResponse,
-  mockSimplifiedMCPVariables,
+  mockMCPVariableDefs,
 } from './fixtures/figma-variables.js';
 
 test.describe('Figma Adapter', () => {
@@ -42,7 +42,7 @@ test.describe('Figma Adapter', () => {
       const result = await adapter.validate({});
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('Either mcpData, variablesResponse, or simplifiedVariables must be provided');
+      expect(result.errors).toContain('Either mcpData, variablesResponse, or variableDefs must be provided');
     });
 
     test('rejects MCP data without name', async () => {
@@ -59,26 +59,26 @@ test.describe('Figma Adapter', () => {
       expect(result.errors).toContain('MCP data missing file name');
     });
 
-    test('validates simplified MCP variables correctly', async () => {
+    test('validates MCP variable defs correctly', async () => {
       const adapter = createFigmaAdapter();
 
       const result = await adapter.validate({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(result.valid).toBe(true);
       expect(result.errors).toBeUndefined();
     });
 
-    test('rejects empty simplified variables', async () => {
+    test('rejects empty variable defs', async () => {
       const adapter = createFigmaAdapter();
 
       const result = await adapter.validate({
-        simplifiedVariables: {},
+        variableDefs: {},
       });
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('Simplified variables object is empty');
+      expect(result.errors).toContain('Variable defs object is empty');
     });
   });
 
@@ -245,24 +245,24 @@ test.describe('Figma Adapter', () => {
     });
   });
 
-  test.describe('Parsing Simplified MCP Variables', () => {
-    test('parses simplified variables with correct metadata', async () => {
+  test.describe('Parsing MCP Variable Defs', () => {
+    test('parses variable defs with correct metadata', async () => {
       const adapter = createFigmaAdapter();
 
       const theme = await adapter.parse({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
         fileName: 'Test Design System',
       });
 
       expect(theme.name).toBe('Test Design System');
-      expect(theme.meta?.source).toBe('figma-mcp-simplified');
+      expect(theme.meta?.source).toBe('figma-mcp-defs');
     });
 
     test('parses color tokens from hex values', async () => {
       const adapter = createFigmaAdapter();
 
       const theme = await adapter.parse({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       const colorCollection = theme.collections.find(c => c.name === 'Color');
@@ -285,7 +285,7 @@ test.describe('Figma Adapter', () => {
       const adapter = createFigmaAdapter();
 
       const theme = await adapter.parse({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       const spacingCollection = theme.collections.find(c => c.name === 'Spacing');
@@ -305,7 +305,7 @@ test.describe('Figma Adapter', () => {
       const adapter = createFigmaAdapter();
 
       const theme = await adapter.parse({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       const displayCollection = theme.collections.find(c => c.name === 'Display');
@@ -324,7 +324,7 @@ test.describe('Figma Adapter', () => {
       const adapter = createFigmaAdapter();
 
       const theme = await adapter.parse({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       // shadow-sm -> collection: "shadow", path: [], tokenName: "shadow-sm"
@@ -345,7 +345,7 @@ test.describe('Figma Adapter', () => {
       const adapter = createFigmaAdapter();
 
       const theme = await adapter.parse({
-        simplifiedVariables: mockSimplifiedMCPVariables,
+        variableDefs: mockMCPVariableDefs,
       });
 
       expect(theme.name).toBe('Untitled');

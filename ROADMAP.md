@@ -5,12 +5,14 @@ This document outlines planned features and improvements for `@baur-software/fig
 ## Current Status (v0.3.0)
 
 - Figma REST API and MCP server input support
-- **MCP simplified variables** - Direct support for `get_variable_defs` output including `Font()` and `Effect()` strings
+- **MCP variable defs** - Direct support for `get_variable_defs` output including `Font()` and `Effect()` strings
 - Tailwind CSS v4 `@theme` output with OKLCH/hex colors
 - Ionic Framework CSS custom properties with full color variants
 - Light/dark mode support from Figma variable modes
 - W3C DTCG-aligned normalized token schema
 - **CLI tool** - `figma-to sync` command for quick token generation
+- **SCSS/Sass output** - Variables, maps, and mixins
+- **TokenTypeRegistry** - Extensible architecture for adding new token types (Open/Closed principle)
 
 ## Planned Features
 
@@ -24,7 +26,7 @@ This document outlines planned features and improvements for `@baur-software/fig
 ### Output Adapters
 
 - [ ] **CSS Modules** - Generate scoped CSS module files
-- [ ] **SCSS/Sass** - Output as Sass variables and maps
+- [x] **SCSS/Sass** - Output as Sass variables and maps
 - [ ] **CSS-in-JS** - Generate objects for styled-components, Emotion, vanilla-extract
 - [ ] **React Native** - StyleSheet-compatible output for mobile
 - [ ] **Swift/Kotlin** - Native mobile platform color constants
@@ -48,9 +50,9 @@ This document outlines planned features and improvements for `@baur-software/fig
 
 - [x] **Typography composites** - Full text style tokens (font, size, weight, line-height)
 - [x] **Shadow tokens** - Box shadow and drop shadow support
-- [ ] **Gradient tokens** - Linear and radial gradient support
-- [ ] **Animation tokens** - Duration, easing, and keyframe tokens
-- [ ] **Border tokens** - Border width, style, and composite borders
+- [x] **Gradient tokens** - Linear, radial, and conic gradient support
+- [x] **Border tokens** - Border width, style, and composite borders
+- [ ] **Animation tokens** - Keyframe and animation sequence tokens
 
 ### Developer Experience
 

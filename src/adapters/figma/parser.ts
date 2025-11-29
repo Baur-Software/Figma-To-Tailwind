@@ -2,6 +2,7 @@
  * Figma Variable Parser
  *
  * Converts Figma variables and collections into normalized design tokens.
+ * Uses the TokenTypeRegistry for type detection and value conversion.
  */
 
 import type {
@@ -21,6 +22,8 @@ import type {
   FigmaExtensions,
 } from '../../schema/tokens.js';
 import { isRGBA, isVariableAlias } from '../../schema/figma.js';
+import { tokenTypeRegistry } from '../../registry/index.js';
+import type { FigmaDetectionContext, VariableDefsContext } from '../../registry/types.js';
 
 /**
  * Variable value type from Figma's valuesByMode
@@ -101,38 +104,16 @@ export function createTokenReference(
 
 /**
  * Determine token type from Figma variable
+ * Uses the TokenTypeRegistry for extensible type detection
  */
 export function detectTokenType(variable: LocalVariable): TokenType {
-  switch (variable.resolvedType) {
-    case 'COLOR':
-      return 'color';
-    case 'BOOLEAN':
-      return 'boolean';
-    case 'STRING':
-      // Could be fontFamily based on scopes
-      if (variable.scopes.includes('FONT_FAMILY')) {
-        return 'fontFamily';
-      }
-      return 'string';
-    case 'FLOAT':
-      // Determine specific type based on scopes
-      if (variable.scopes.includes('FONT_WEIGHT')) {
-        return 'fontWeight';
-      }
-      if (
-        variable.scopes.includes('CORNER_RADIUS') ||
-        variable.scopes.includes('WIDTH_HEIGHT') ||
-        variable.scopes.includes('GAP') ||
-        variable.scopes.includes('FONT_SIZE') ||
-        variable.scopes.includes('LINE_HEIGHT') ||
-        variable.scopes.includes('LETTER_SPACING')
-      ) {
-        return 'dimension';
-      }
-      return 'number';
-    default:
-      return 'string';
-  }
+  const context: FigmaDetectionContext = {
+    resolvedType: variable.resolvedType,
+    scopes: variable.scopes,
+    name: variable.name,
+  };
+
+  return tokenTypeRegistry.detectFromFigma(context);
 }
 
 // =============================================================================
@@ -324,7 +305,7 @@ export function parseVariables(
 }
 
 // =============================================================================
-// Simplified MCP Variable Parsing
+// MCP Variable Defs Parsing (from get_variable_defs tool)
 // =============================================================================
 
 /**
@@ -422,42 +403,15 @@ function parseEffectString(effectStr: string): {
 
 /**
  * Detect token type from variable path and value
+ * Uses the TokenTypeRegistry for extensible type detection
  */
-function detectSimplifiedTokenType(path: string, value: string): TokenType {
-  const lowerPath = path.toLowerCase();
+function detectVariableDefsTokenType(path: string, value: string): TokenType {
+  const context: VariableDefsContext = {
+    path,
+    value,
+  };
 
-  // Check path for hints
-  if (lowerPath.includes('color') || lowerPath.includes('foundation')) {
-    return 'color';
-  }
-  if (lowerPath.includes('spacing') || lowerPath.includes('radius') || lowerPath.includes('gap')) {
-    return 'dimension';
-  }
-  if (lowerPath.includes('display') || lowerPath.includes('text') || lowerPath.includes('font')) {
-    if (value.startsWith('Font(')) {
-      return 'typography';
-    }
-    return 'fontFamily';
-  }
-  if (lowerPath.includes('shadow')) {
-    return 'shadow';
-  }
-
-  // Check value format
-  if (value.startsWith('#')) {
-    return 'color';
-  }
-  if (value.startsWith('Font(')) {
-    return 'typography';
-  }
-  if (value.startsWith('Effect(')) {
-    return 'shadow';
-  }
-  if (/^\d+(\.\d+)?(px)?$/.test(value)) {
-    return 'dimension';
-  }
-
-  return 'string';
+  return tokenTypeRegistry.detectFromVariableDefs(context);
 }
 
 /**
@@ -479,11 +433,12 @@ function toFontWeight(weight: number): 100 | 200 | 300 | 400 | 500 | 600 | 700 |
 }
 
 /**
- * Parse simplified MCP variables into normalized token collections
+ * Parse MCP variable defs into normalized token collections
  *
  * Input format: { "Color/Primary/Primary-500": "#0038a8", ... }
+ * This is the output from Figma MCP's get_variable_defs tool.
  */
-export function parseSimplifiedVariables(
+export function parseVariableDefs(
   variables: Record<string, string>
 ): TokenCollection[] {
   // Group variables by their top-level category
@@ -514,7 +469,7 @@ export function parseSimplifiedVariables(
     const tokens: TokenGroup = {};
 
     for (const [fullPath, { path, tokenName, value }] of variableMap) {
-      const tokenType = detectSimplifiedTokenType(fullPath, value);
+      const tokenType = detectVariableDefsTokenType(fullPath, value);
       let tokenValue: Token['$value'];
 
       // For complex values (Font(), Effect()), use the value directly without splitting

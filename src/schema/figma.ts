@@ -230,11 +230,11 @@ export const isFigmaColor = isRGBA;
 export const isFigmaVariableAlias = isVariableAlias;
 
 // =============================================================================
-// Simplified MCP Variable Format (from get_variable_defs tool)
+// MCP Variable Defs Format (from get_variable_defs tool)
 // =============================================================================
 
 /**
- * Simplified variable definitions from Figma MCP get_variable_defs tool
+ * Variable definitions from Figma MCP get_variable_defs tool
  *
  * Format: { "Variable/Path/Name": "value", ... }
  *
@@ -247,11 +247,14 @@ export const isFigmaVariableAlias = isVariableAlias;
  *
  * @example
  * ```typescript
- * const variables: MCPSimplifiedVariables = {
+ * const variables: MCPVariableDefs = {
  *   "Color/Primary/Primary-500": "#0038a8",
  *   "Spacing/4": "16",
  *   "Display/6xl/Bold": "Font(family: \"DM Sans\", style: Bold, size: 56, weight: 700, lineHeight: 64, letterSpacing: -1.5)"
  * };
  * ```
  */
-export type MCPSimplifiedVariables = Record<string, string>;
+export type MCPVariableDefs = Record<string, string>;
+
+/** @deprecated Use MCPVariableDefs instead */
+export type MCPSimplifiedVariables = MCPVariableDefs;

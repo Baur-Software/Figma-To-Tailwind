@@ -109,9 +109,9 @@ When using the [Figma MCP server](https://help.figma.com/hc/en-us/articles/32132
 ```typescript
 import { figmaToTailwind } from '@baur-software/figma-to';
 
-// From MCP get_variable_defs tool (simplified format)
+// From MCP get_variable_defs tool
 const output = await figmaToTailwind({
-  simplifiedVariables: mcpVariables,  // { "Color/Primary/500": "#3880f6", ... }
+  variableDefs: mcpVariables,  // { "Color/Primary/500": "#3880f6", ... }
   fileName: 'My Design System',
 });
 

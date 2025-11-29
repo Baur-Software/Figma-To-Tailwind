@@ -6,12 +6,12 @@
  */
 
 import type { GetLocalVariablesResponse } from '@figma/rest-api-spec';
-import type { FigmaMCPDataResponse, MCPSimplifiedVariables } from '../../schema/figma.js';
+import type { FigmaMCPDataResponse, MCPVariableDefs } from '../../schema/figma.js';
 import type {
   ThemeFile,
   InputAdapter,
 } from '../../schema/tokens.js';
-import { parseVariables, parseSimplifiedVariables } from './parser.js';
+import { parseVariables, parseVariableDefs } from './parser.js';
 
 // =============================================================================
 // Input Types
@@ -25,11 +25,11 @@ export interface FigmaInput {
   mcpData?: FigmaMCPDataResponse;
   /** Data from REST API /variables/local endpoint */
   variablesResponse?: GetLocalVariablesResponse;
-  /** Simplified variables from MCP get_variable_defs tool */
-  simplifiedVariables?: MCPSimplifiedVariables;
+  /** Variable definitions from MCP get_variable_defs tool */
+  variableDefs?: MCPVariableDefs;
   /** Figma file key (for metadata) */
   fileKey?: string;
-  /** File name (for metadata when using simplified variables) */
+  /** File name (for metadata when using variable defs) */
   fileName?: string;
 }
 
@@ -53,8 +53,8 @@ export class FigmaAdapter implements InputAdapter<FigmaInput> {
   async validate(source: FigmaInput): Promise<{ valid: boolean; errors?: string[] }> {
     const errors: string[] = [];
 
-    if (!source.mcpData && !source.variablesResponse && !source.simplifiedVariables) {
-      errors.push('Either mcpData, variablesResponse, or simplifiedVariables must be provided');
+    if (!source.mcpData && !source.variablesResponse && !source.variableDefs) {
+      errors.push('Either mcpData, variablesResponse, or variableDefs must be provided');
     }
 
     if (source.mcpData) {
@@ -75,9 +75,9 @@ export class FigmaAdapter implements InputAdapter<FigmaInput> {
       }
     }
 
-    if (source.simplifiedVariables) {
-      if (Object.keys(source.simplifiedVariables).length === 0) {
-        errors.push('Simplified variables object is empty');
+    if (source.variableDefs) {
+      if (Object.keys(source.variableDefs).length === 0) {
+        errors.push('Variable defs object is empty');
       }
     }
 
@@ -100,7 +100,7 @@ export class FigmaAdapter implements InputAdapter<FigmaInput> {
     let tokenCollections;
     let fileName = source.fileName || 'Untitled';
     let lastModified: string | undefined;
-    let sourceType: 'figma-api' | 'figma-mcp' | 'figma-mcp-simplified';
+    let sourceType: 'figma-api' | 'figma-mcp' | 'figma-mcp-defs';
 
     if (source.variablesResponse) {
       // Prefer REST API response (most complete)
@@ -108,10 +108,10 @@ export class FigmaAdapter implements InputAdapter<FigmaInput> {
       const collections = source.variablesResponse.meta.variableCollections;
       tokenCollections = parseVariables(variables, collections);
       sourceType = 'figma-api';
-    } else if (source.simplifiedVariables) {
-      // Use simplified MCP format (from get_variable_defs)
-      tokenCollections = parseSimplifiedVariables(source.simplifiedVariables);
-      sourceType = 'figma-mcp-simplified';
+    } else if (source.variableDefs) {
+      // Use MCP variable defs format (from get_variable_defs)
+      tokenCollections = parseVariableDefs(source.variableDefs);
+      sourceType = 'figma-mcp-defs';
     } else if (source.mcpData) {
       // Fall back to full MCP data
       const variables = source.mcpData.variables || {};

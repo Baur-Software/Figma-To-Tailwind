@@ -3,6 +3,8 @@
  *
  * Generates Tailwind CSS v4 @theme directives and CSS variables
  * from normalized design tokens.
+ *
+ * Uses the TokenTypeRegistry for extensible namespace mapping.
  */
 
 import type {
@@ -17,6 +19,8 @@ import type {
 import { isTokenReference } from '../../schema/tokens.js';
 import { tokenValueToCss, colorToOklch, colorToHex } from './converters.js';
 import type { ColorValue } from '../../schema/tokens.js';
+import { tokenTypeRegistry } from '../../registry/index.js';
+import type { TailwindNamespace } from '../../registry/types.js';
 
 // =============================================================================
 // Token Traversal Utilities
@@ -70,84 +74,37 @@ function isTokenGroup(value: unknown): value is TokenGroup {
 // Tailwind Namespace Mapping
 // =============================================================================
 
-type TailwindNamespace =
-  | 'color'
-  | 'spacing'
-  | 'font-family'
-  | 'font-size'
-  | 'font-weight'
-  | 'line-height'
-  | 'letter-spacing'
-  | 'radius'
-  | 'shadow'
-  | 'opacity'
-  | 'transition-duration'
-  | 'transition-timing-function'
-  | 'z-index';
+// TailwindNamespace is now imported from registry/types.js
 
 /**
  * Map token type to Tailwind namespace
+ *
+ * Uses the TokenTypeRegistry for extensible namespace mapping.
+ * New token types added to the registry will automatically get namespace support.
  */
 function getNamespace(token: Token, path: string[]): TailwindNamespace | null {
-  // First, check path-based hints
+  // First check path-based hints that override type defaults
   const pathHint = path[0]?.toLowerCase();
 
-  if (pathHint === 'colors' || pathHint === 'color') {
-    return 'color';
-  }
-  if (pathHint === 'spacing' || pathHint === 'space') {
-    return 'spacing';
-  }
-  if (pathHint === 'radius' || pathHint === 'border-radius' || pathHint === 'radii') {
-    return 'radius';
-  }
-  if (pathHint === 'shadows' || pathHint === 'shadow' || pathHint === 'elevation') {
-    return 'shadow';
-  }
+  // Handle special typography path cases
   if (pathHint === 'typography' || pathHint === 'fonts' || pathHint === 'font') {
-    // Determine specific typography namespace from token type
-    switch (token.$type) {
-      case 'fontFamily':
-        return 'font-family';
-      case 'fontWeight':
-        return 'font-weight';
-      case 'dimension':
-        if (path.some(p => p.includes('size'))) return 'font-size';
-        if (path.some(p => p.includes('height') || p.includes('leading'))) return 'line-height';
-        if (path.some(p => p.includes('spacing') || p.includes('tracking'))) return 'letter-spacing';
-        break;
+    if (token.$type === 'dimension') {
+      if (path.some(p => p.includes('size'))) return 'font-size';
+      if (path.some(p => p.includes('height') || p.includes('leading'))) return 'line-height';
+      if (path.some(p => p.includes('spacing') || p.includes('tracking'))) return 'letter-spacing';
     }
   }
+
+  // Handle opacity and z-index paths
   if (pathHint === 'opacity') {
     return 'opacity';
   }
   if (pathHint === 'z-index' || pathHint === 'zindex') {
     return 'z-index';
   }
-  if (pathHint === 'duration' || pathHint === 'timing' || pathHint === 'animation') {
-    if (token.$type === 'duration') return 'transition-duration';
-    if (token.$type === 'cubicBezier') return 'transition-timing-function';
-  }
 
-  // Fall back to type-based namespace
-  switch (token.$type) {
-    case 'color':
-      return 'color';
-    case 'fontFamily':
-      return 'font-family';
-    case 'fontWeight':
-      return 'font-weight';
-    case 'shadow':
-      return 'shadow';
-    case 'duration':
-      return 'transition-duration';
-    case 'cubicBezier':
-      return 'transition-timing-function';
-    case 'dimension':
-      return 'spacing';
-    default:
-      return null;
-  }
+  // Use the registry for namespace resolution
+  return tokenTypeRegistry.getNamespace(token.$type, path);
 }
 
 // =============================================================================

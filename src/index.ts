@@ -115,7 +115,7 @@ export async function generateOutput(
  *
  * @example
  * ```typescript
- * const output = await figmaToScss({ simplifiedVariables: mcpVariables });
+ * const output = await figmaToScss({ variableDefs: mcpVariables });
  * fs.writeFileSync('_variables.scss', output.files['_variables.scss']);
  * ```
  */

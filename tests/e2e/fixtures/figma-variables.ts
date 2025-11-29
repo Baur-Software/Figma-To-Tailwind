@@ -481,13 +481,13 @@ export {
 };
 
 // =============================================================================
-// Simplified MCP Variables (from get_variable_defs tool)
+// MCP Variable Defs (from get_variable_defs tool)
 // =============================================================================
 
 /**
- * Mock simplified MCP variables - simulates output from Figma MCP get_variable_defs tool
+ * Mock MCP variable defs - simulates output from Figma MCP get_variable_defs tool
  */
-export const mockSimplifiedMCPVariables: Record<string, string> = {
+export const mockMCPVariableDefs: Record<string, string> = {
   // Colors
   "Color/Primary/500": "#3880f6",
   "Color/Primary/600": "#2d66c5",
@@ -515,3 +515,6 @@ export const mockSimplifiedMCPVariables: Record<string, string> = {
   // Effects
   "shadow-sm": "Effect(type: DROP_SHADOW, color: #00000020, offset: (0, 1), radius: 2, spread: 0)",
 };
+
+/** @deprecated Use mockMCPVariableDefs instead */
+export const mockSimplifiedMCPVariables = mockMCPVariableDefs;

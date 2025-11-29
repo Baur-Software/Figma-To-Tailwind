@@ -261,7 +261,7 @@ export interface ThemeFile {
   collections: TokenCollection[];
   /** Metadata about the theme source */
   meta?: {
-    source: 'figma-mcp' | 'figma-api' | 'figma-mcp-simplified' | 'manual';
+    source: 'figma-mcp' | 'figma-api' | 'figma-mcp-defs' | 'manual';
     figmaFileKey?: string;
     lastSynced?: string;
     version?: string;
