@@ -47,19 +47,43 @@ Figma Variables  →  This Library  →  Production CSS
 
 ### AI-Powered Design Sync
 
-When using Claude with the [Figma MCP server](https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server):
+When using Claude with the [Figma MCP server](https://help.figma.com/hc/en-us/articles/32132100833559-Guide-to-the-Figma-MCP-server), just ask:
 
 ```text
-You: "Update my app's theme CSS from the latest Figma design"
-Claude: *reads Figma file via MCP* → *generates CSS* → *writes files*
+You: "Get the design tokens from my Figma file and generate theme CSS"
 ```
 
-No API tokens to manage, no scripts to write - just ask.
+Claude will:
+
+1. Use `get_variable_defs` to fetch your Figma variables
+2. Use this library to transform them into Tailwind/Ionic CSS
+3. Write the CSS files to your project
+
+No scripts to maintain - the library handles `Font()` and `Effect()` strings from MCP automatically.
 
 ## Installation
 
 ```bash
 npm install @baur-software/figma-to
+```
+
+## CLI
+
+Quickly sync your Figma design tokens to CSS:
+
+```bash
+# Using npx
+npx @baur-software/figma-to sync --file YOUR_FIGMA_FILE_KEY --output ./src/theme
+
+# Or install globally
+npm install -g @baur-software/figma-to
+figma-to sync --file YOUR_FIGMA_FILE_KEY --output ./src/theme
+```
+
+Set your Figma token:
+
+```bash
+export FIGMA_TOKEN=your_figma_token
 ```
 
 ## Quick Start
@@ -85,12 +109,22 @@ When using the [Figma MCP server](https://help.figma.com/hc/en-us/articles/32132
 ```typescript
 import { figmaToTailwind } from '@baur-software/figma-to';
 
+// From MCP get_variable_defs tool (simplified format)
+const output = await figmaToTailwind({
+  simplifiedVariables: mcpVariables,  // { "Color/Primary/500": "#3880f6", ... }
+  fileName: 'My Design System',
+});
+
+console.log(output.css);
+```
+
+The library also supports the full MCP response format:
+
+```typescript
 // MCP server response from get_figma_data tool
 const output = await figmaToTailwind({
   mcpData: mcpResponse,
 });
-
-console.log(output.css);
 ```
 
 ### From Figma REST API

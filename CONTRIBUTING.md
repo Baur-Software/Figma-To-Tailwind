@@ -51,6 +51,7 @@ The library uses an adapter pattern to separate concerns:
 ```
 
 This design allows:
+
 - Adding new input sources without changing output logic
 - Adding new output formats without changing input parsing
 - Testing each adapter independently
@@ -394,4 +395,4 @@ Prefixes: `feat`, `fix`, `docs`, `test`, `refactor`, `chore`
 
 ## Questions?
 
-Open an issue on [GitHub](https://github.com/Baur-Software/Figma-To-Tailwind/issues) or start a discussion.
+Open an issue on [GitHub](https://github.com/Baur-Software/Figma-To/issues) or start a discussion.
