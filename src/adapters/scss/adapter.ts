@@ -326,9 +326,9 @@ export class ScssAdapter implements OutputAdapter<ScssOutput> {
     const value = token.$value;
 
     // Handle references
-    if (typeof value === 'object' && '$ref' in value) {
+    if (typeof value === 'object' && value !== null && '$ref' in value) {
       // Convert reference to SCSS variable reference
-      const refPath = value.$ref.replace(/\./g, '-');
+      const refPath = (value.$ref as string).replace(/\./g, '-');
       return `$${refPath}`;
     }
 

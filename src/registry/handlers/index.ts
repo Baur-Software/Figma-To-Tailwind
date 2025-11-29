@@ -12,4 +12,5 @@ export { borderHandler } from './border.js';
 export { gradientHandler } from './gradient.js';
 export { fontFamilyHandler, fontWeightHandler } from './font.js';
 export { durationHandler, cubicBezierHandler, transitionHandler } from './timing.js';
+export { keyframesHandler, animationHandler } from './animation.js';
 export { stringHandler, numberHandler, booleanHandler } from './primitives.js';

@@ -100,6 +100,32 @@ export interface TransitionValue {
   delay?: DurationValue;
 }
 
+/** Keyframe step definition - CSS properties at a specific keyframe step */
+export type KeyframeStep = Record<string, string | number>;
+
+/** Keyframes definition - steps keyed by percentage (0%, 50%, 100%) or from/to */
+export type KeyframesValue = Record<string, KeyframeStep>;
+
+/** Animation definition */
+export interface AnimationValue {
+  /** Name of the animation (references keyframes) */
+  name: string;
+  /** Animation duration */
+  duration: DurationValue;
+  /** Timing function */
+  timingFunction?: CubicBezierValue | 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out';
+  /** Delay before animation starts */
+  delay?: DurationValue;
+  /** Number of iterations (Infinity for infinite) */
+  iterationCount?: number | 'infinite';
+  /** Animation direction */
+  direction?: 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
+  /** Fill mode */
+  fillMode?: 'none' | 'forwards' | 'backwards' | 'both';
+  /** Play state */
+  playState?: 'running' | 'paused';
+}
+
 // =============================================================================
 // Token Types - W3C DTCG aligned
 // =============================================================================
@@ -119,7 +145,9 @@ export type TokenType =
   | 'border'
   | 'typography'
   | 'gradient'
-  | 'transition';
+  | 'transition'
+  | 'keyframes'
+  | 'animation';
 
 export type TokenValue<T extends TokenType> =
   T extends 'color' ? ColorValue :
@@ -136,6 +164,8 @@ export type TokenValue<T extends TokenType> =
   T extends 'typography' ? TypographyValue :
   T extends 'gradient' ? GradientValue :
   T extends 'transition' ? TransitionValue :
+  T extends 'keyframes' ? KeyframesValue :
+  T extends 'animation' ? AnimationValue :
   never;
 
 // =============================================================================

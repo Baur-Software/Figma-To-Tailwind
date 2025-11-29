@@ -52,7 +52,7 @@ This document outlines planned features and improvements for `@baur-software/fig
 - [x] **Shadow tokens** - Box shadow and drop shadow support
 - [x] **Gradient tokens** - Linear, radial, and conic gradient support
 - [x] **Border tokens** - Border width, style, and composite borders
-- [ ] **Animation tokens** - Keyframe and animation sequence tokens
+- [x] **Animation tokens** - Keyframe and animation sequence tokens
 
 ### Developer Experience
 
@@ -65,8 +65,8 @@ This document outlines planned features and improvements for `@baur-software/fig
 ### Validation & Tooling
 
 - [ ] **Token linting** - Warn on naming inconsistencies
-- [ ] **Diff output** - Show what changed between syncs
-- [ ] **Dry run mode** - Preview output without writing files
+- [x] **Diff output** - Show what changed between syncs
+- [x] **Dry run mode** - Preview output without writing files
 - [ ] **Migration helpers** - Upgrade paths between major versions
 
 ## Contributing

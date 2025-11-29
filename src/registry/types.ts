@@ -29,6 +29,7 @@ export type TailwindNamespace =
   | 'border'
   | 'gradient'
   | 'animation'
+  | 'keyframes'
   | 'blur';
 
 // =============================================================================

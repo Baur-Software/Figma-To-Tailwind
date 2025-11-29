@@ -55,6 +55,8 @@ import {
   durationHandler,
   cubicBezierHandler,
   transitionHandler,
+  keyframesHandler,
+  animationHandler,
   stringHandler,
   numberHandler,
   booleanHandler,
@@ -73,6 +75,8 @@ registerTokenType(fontWeightHandler);
 registerTokenType(durationHandler);
 registerTokenType(cubicBezierHandler);
 registerTokenType(transitionHandler);
+registerTokenType(keyframesHandler);
+registerTokenType(animationHandler);
 registerTokenType(stringHandler);
 registerTokenType(numberHandler);
 registerTokenType(booleanHandler);
