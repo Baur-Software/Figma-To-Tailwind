@@ -1,0 +1,67 @@
+{
+  "name": "@baur-software/figma-to-nuxt",
+  "version": "0.1.0",
+  "description": "Nuxt 3 module for syncing Figma design tokens to Tailwind CSS, SCSS, or plain CSS",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.cjs",
+      "types": "./dist/types.d.ts"
+    },
+    "./composables": {
+      "import": "./dist/runtime/composables/index.mjs",
+      "types": "./dist/runtime/composables/index.d.ts"
+    }
+  },
+  "main": "./dist/module.cjs",
+  "module": "./dist/module.mjs",
+  "types": "./dist/types.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "nuxt-module-build build",
+    "dev": "nuxt-module-build build --stub",
+    "prepack": "nuxt-module-build build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "figma",
+    "design-tokens",
+    "tailwind",
+    "css",
+    "scss"
+  ],
+  "author": "Baur Software",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Baur-Software/Figma-To"
+  },
+  "bugs": {
+    "url": "https://github.com/Baur-Software/Figma-To/issues"
+  },
+  "homepage": "https://github.com/Baur-Software/Figma-To#readme",
+  "dependencies": {
+    "@nuxt/kit": "^3.15.0",
+    "@baur-software/figma-to": "^0.5.0"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "^0.8.0",
+    "@nuxt/schema": "^3.15.0",
+    "nuxt": "^3.15.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0",
+    "vue": "^3.5.0"
+  },
+  "peerDependencies": {
+    "nuxt": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
