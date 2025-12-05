@@ -106,6 +106,14 @@ export {
   type AndroidXmlAdapterOptions,
 } from './adapters/output/android-xml/index.js';
 
+// Swift/Kotlin Output Adapter
+export {
+  SwiftKotlinAdapter,
+  createSwiftKotlinAdapter,
+  type SwiftKotlinOutput,
+  type SwiftKotlinAdapterOptions,
+} from './adapters/output/swift-kotlin/index.js';
+
 // CSS Input Adapter
 export {
   CSSAdapter,
@@ -167,6 +175,11 @@ import {
   type AndroidXmlAdapterOptions,
   type AndroidXmlOutput,
 } from './adapters/output/android-xml/index.js';
+import {
+  createSwiftKotlinAdapter,
+  type SwiftKotlinAdapterOptions,
+  type SwiftKotlinOutput,
+} from './adapters/output/swift-kotlin/index.js';
 import type { ThemeFile } from './schema/tokens.js';
 
 /**
@@ -304,5 +317,37 @@ export async function generateAndroidXmlOutput(
   options?: AndroidXmlAdapterOptions
 ): Promise<AndroidXmlOutput> {
   const adapter = createAndroidXmlAdapter();
+  return adapter.transform(theme, options);
+}
+
+/**
+ * Quick conversion from Figma data to Swift/Kotlin native constants
+ *
+ * @example
+ * ```typescript
+ * const output = await figmaToSwiftKotlin({ variablesResponse, fileKey });
+ * fs.writeFileSync('DesignTokens.swift', output.swift);
+ * fs.writeFileSync('DesignTokens.kt', output.kotlin);
+ * ```
+ */
+export async function figmaToSwiftKotlin(
+  input: FigmaInput,
+  options?: SwiftKotlinAdapterOptions
+): Promise<SwiftKotlinOutput> {
+  const figmaAdapter = createFigmaAdapter();
+  const theme = await figmaAdapter.parse(input);
+
+  const outputAdapter = createSwiftKotlinAdapter();
+  return outputAdapter.transform(theme, options);
+}
+
+/**
+ * Generate Swift/Kotlin output from normalized theme
+ */
+export async function generateSwiftKotlinOutput(
+  theme: ThemeFile,
+  options?: SwiftKotlinAdapterOptions
+): Promise<SwiftKotlinOutput> {
+  const adapter = createSwiftKotlinAdapter();
   return adapter.transform(theme, options);
 }
