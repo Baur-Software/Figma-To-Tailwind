@@ -77,3 +77,20 @@ export {
   type PluginStatus,
   type WriteServerClient,
 } from './figma/index.js';
+
+// Android XML Output Adapter
+export {
+  AndroidXmlAdapter,
+  createAndroidXmlAdapter,
+  colorToAndroid,
+  colorToAndroidRgb,
+  dimensionToAndroid,
+  numberToAndroidDimen,
+  tokenNameToAndroid,
+  ensureValidAndroidName,
+  fontWeightToAndroid,
+  typographyToAndroidAttrs,
+  type AndroidXmlOutput,
+  type AndroidXmlAdapterOptions,
+  type AndroidDimensionUnit,
+} from './android-xml/index.js';

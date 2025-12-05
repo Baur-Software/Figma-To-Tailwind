@@ -98,6 +98,14 @@ export {
   type PluginStatus,
 } from './adapters/output/figma/index.js';
 
+// Android XML Output Adapter
+export {
+  AndroidXmlAdapter,
+  createAndroidXmlAdapter,
+  type AndroidXmlOutput,
+  type AndroidXmlAdapterOptions,
+} from './adapters/output/android-xml/index.js';
+
 // CSS Input Adapter
 export {
   CSSAdapter,
@@ -154,6 +162,11 @@ import {
   type NextJsAdapterOptions,
   type NextJsOutput,
 } from './adapters/output/nextjs/index.js';
+import {
+  createAndroidXmlAdapter,
+  type AndroidXmlAdapterOptions,
+  type AndroidXmlOutput,
+} from './adapters/output/android-xml/index.js';
 import type { ThemeFile } from './schema/tokens.js';
 
 /**
@@ -255,5 +268,41 @@ export async function generateNextJsOutput(
   options?: NextJsAdapterOptions
 ): Promise<NextJsOutput> {
   const adapter = createNextJsAdapter();
+  return adapter.transform(theme, options);
+}
+
+/**
+ * Quick conversion from Figma data to Android XML resources
+ *
+ * Generates Android resource XML files compatible with Android 13-15 (API 33-35)
+ * and Material 3 theming.
+ *
+ * @example
+ * ```typescript
+ * const output = await figmaToAndroidXml({ variablesResponse, fileKey });
+ * fs.writeFileSync('res/values/colors.xml', output.files['values/colors.xml']);
+ * fs.writeFileSync('res/values/dimens.xml', output.files['values/dimens.xml']);
+ * fs.writeFileSync('res/values/styles.xml', output.files['values/styles.xml']);
+ * ```
+ */
+export async function figmaToAndroidXml(
+  input: FigmaInput,
+  options?: AndroidXmlAdapterOptions
+): Promise<AndroidXmlOutput> {
+  const figmaAdapter = createFigmaAdapter();
+  const theme = await figmaAdapter.parse(input);
+
+  const outputAdapter = createAndroidXmlAdapter();
+  return outputAdapter.transform(theme, options);
+}
+
+/**
+ * Generate Android XML output from normalized theme
+ */
+export async function generateAndroidXmlOutput(
+  theme: ThemeFile,
+  options?: AndroidXmlAdapterOptions
+): Promise<AndroidXmlOutput> {
+  const adapter = createAndroidXmlAdapter();
   return adapter.transform(theme, options);
 }
